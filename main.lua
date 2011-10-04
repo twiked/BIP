@@ -2,10 +2,10 @@
 Shot = {} --Shot class
 function Shot.create(width, height, mode, speed, damage, angle)
     local sht = {}
-    sht.x=player_x
-    sht.y=player_y
+    sht.x = player_x
+    sht.y = player_y
     sht.angle = ch_angle
-    sht.speed=400
+    sht.speed = speed
     sht.damage = damage
 	sht.width = width
 	sht.height = height
@@ -18,20 +18,21 @@ function Shot.create(width, height, mode, speed, damage, angle)
 end
 
 Bot = {} -- Bots table
-function Bot.create(x, y, speed)
+function Bot.create(x, y, speed, rew)
     local bt = {}
     -- bt.x = math.random(0, win_width)
     -- bt.y = math.random(0, win_height)
     bt.x = x
     bt.y = y
     bt.health = 100
-	bt.width=5
-	bt.height=2
-	bt.angle=0
+	bt.width = 20
+	bt.height = 20
+	bt.reward = rew
+	bt.angle = 0
 	bt.vx = 0
 	bt.vy = 0
-	bt.speed = 100
-	function bt:hit(hitter)
+	bt.speed = speed
+	function bt.hit(hitter)
 		bt.health = bt.health - hitter.damage
 	end
     return bt
@@ -47,12 +48,22 @@ if (a.x + a.width > b.x) and (a.x < b.x + b.width) and (a.y + a.height > b.y) an
         return false
     end
 end
-    
+
+function spawn_bot()
+	local x1,y1,x2,y2=0,0,0,0
+	if(player_x < win_width/2) then
+		if (player_y < win_height/2) then
+			
+	local sp = math.random(1, 20) / 10
+	table.insert(bots,Bot.create(math.random(0,win_width), math.random(0, win_height), sp, sp*1000))
+end
+
 function move_bots(b,dt) -- Move bots around
 	local old_x=0
 	local old_y=1
 	for i,v in ipairs(b) do
 		if b[i].health <= 0 then
+			score = score + b[i].reward
 			table.remove(b,i)
 			break
 		end
@@ -61,8 +72,8 @@ function move_bots(b,dt) -- Move bots around
 		b[i].angle = -math.atan2((player_x-b[i].x),(player_y)-b[i].y) + math.pi/2
 		b[i].vx = math.cos(b[i].angle)
 		b[i].vy = math.sin(b[i].angle)
-		b[i].x = b[i].x + b[i].vx
-		b[i].y = b[i].y + b[i].vy
+		b[i].x = b[i].x + b[i].vx * b[i].speed
+		b[i].y = b[i].y + b[i].vy * b[i].speed
 		if (b[i].x < 0 or  b[i].x > win_width or b[i].y < 0 or b[i].y > win_height) then
 			b[i].x = old_x
 			b[i].y = old_y
@@ -98,7 +109,8 @@ function love.load()
     mouse_y = 0
     player_speed = 300
     ch_angle=0
-    
+    score = 0
+	
     -- crosshair definitions
     ch_x1=0
     ch_y1=0
@@ -109,17 +121,21 @@ function love.load()
     
     love.graphics.setLine( 3, "smooth" )
     ship = love.graphics.newImage("ship.png")
-    cooldown = 0.5 -- delay before new shot, in seconds
+    cooldown = 0.01 -- delay before new shot, in seconds
     last_shot = cooldown -- time since last shot, initialized to allow immediate shooting at start
     bots = {} --Table containing all the bots
-	table.insert(bots,Bot.create(5, 90, 1))
-	table.insert(bots,Bot.create(5, 50, 0.1))
-	table.insert(bots,Bot.create(5, 200, 0.3))
+	table.insert(bots,Bot.create(5, 90, 1, 10)) --Create a first bot
     shots = {} -- table of player shots
     boom = 0 -- Number of hits
+	bot_ctr = 0 -- Time since last spawn of bot
     end
     
 function love.update(dt)
+		bot_ctr = bot_ctr + dt
+	if ( bot_ctr >= 0.2) then
+		bot_ctr = 0
+		spawn_bot()
+	end
     if (love.keyboard.isDown("right") and player_x < win_width) then
         player_x = player_x + (player_speed * dt)
     elseif (love.keyboard.isDown("left") and player_x > 0) then
@@ -133,13 +149,15 @@ function love.update(dt)
     end
     shot_type = "cl" -- ugly hack for 2 lines under
     if (love.mouse.isDown( "l" ) and last_shot >= cooldown) then
-        table.insert(shots, Shot.create(6, 3, 1, 400, 100, ch_angle))
+        table.insert(shots, Shot.create(8, 3, 1, 400, 100, ch_angle))
         last_shot = 0
     else
         last_shot = last_shot + dt
     end
     adv_shots(shots, bots, dt)
-    move_bots(bots, dt)
+	--if love.mouse.isDown( "r" ) then
+	move_bots(bots, dt)
+	--end
     mouse_x = love.mouse.getX()
     mouse_y = love.mouse.getY()
     ch_angle=-math.atan2((mouse_x-player_x),(mouse_y-player_y)) + math.pi/2
@@ -155,11 +173,11 @@ function love.draw()
     love.graphics.draw( ship, player_x , player_y, ch_angle, 2, 2, 8, 8 )
     love.graphics.line( ch_x1, ch_y1, ch_x2, ch_y2 )
     for i, v in ipairs(shots) do
-		love.graphics.draw (shots[i].image , shots[i].x, shots[i].y, shots[i].angle, 4, 4)
+		love.graphics.draw (shots[i].image , shots[i].x, shots[i].y, shots[i].angle, 1, 1)
     end
 	
 	for j,v in ipairs(bots) do
-    love.graphics.circle ("line", bots[j].x, bots[j].y, 20, 3)
+    love.graphics.circle ("line", bots[j].x, bots[j].y, 10, 3)
     end
 	
     --=== Debug
@@ -168,8 +186,8 @@ function love.draw()
     --if (#shots >= 1) then
     --love.graphics.print(math.floor(shots[1].x) .. "*" .. math.floor(shots[1].y), 100, 100)
     --end
-     if (boom) then
-         love.graphics.print("Hits : " .. boom, 100, 300)
+     if (score) then
+         love.graphics.print("Score : " .. score, 100, 300)
      end
     --love.graphics.print( #shots, 50, 200)
 	love.graphics.print("FPS: " .. love.timer.getFPS(), 540, 10)
