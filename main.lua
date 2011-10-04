@@ -81,7 +81,7 @@ function adv_shots(s, obj, dt) -- Move the shots further and check collisions
 			for j, y in ipairs(obj) do
 				if check_collision(s[i],obj[j]) then
 					boom = boom + 1
-					obj[i].hit(s[i])
+					obj[j].hit(s[i])
 				end
 			end
 		end
