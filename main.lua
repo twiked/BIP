@@ -24,7 +24,9 @@ function Bot.create(x, y, speed, rew)
     -- bt.y = math.random(0, win_height)
     bt.x = x
     bt.y = y
-    bt.health = 100
+	bt.max_health = 100
+    bt.health = bt.max_health
+	bt.color = bt.health
 	bt.width = 20
 	bt.height = 20
 	bt.reward = rew
@@ -50,15 +52,26 @@ if (a.x + a.width > b.x) and (a.x < b.x + b.width) and (a.y + a.height > b.y) an
 end
 
 function spawn_bot()
-	local x1,y1,x2,y2=0,0,0,0
-	if(player_x < win_width/2) then
-		if (player_y < win_height/2) then
-			
-	local sp = math.random(1, 20) / 10
-	table.insert(bots,Bot.create(math.random(0,win_width), math.random(0, win_height), sp, sp*1000))
+	local x1,y1,x2,y2=0,0,player_x, player_y
+	if(player_x > win_width/2) then
+		if (player_y > win_height/2) then
+			x1,y1,x2,y2 = 0,0, x2-20,y2-20
+		else
+			x1,y1,x2,y2 = 0, win_height,x2-20, y2+20
+		end
+	else
+		if (player_y > win_height/2) then
+			x1,y1,x2,y2 = win_width, 0,x2+20,y2-20
+		else
+			x1,y1,x2,y2 = win_width, win_height,x2+20,y2+20
+		end
+	end
+	sp = math.random(1,20)/10
+	x1,x2,y1,y2 = math.min(x1,x2),math.max(x1,x2),math.min(y1,y2),math.max(y1,y2)
+	table.insert(bots,Bot.create(math.random(x1, x2), math.random(y1, y2), sp, sp*1000))
 end
 
-function move_bots(b,dt) -- Move bots around
+function move_bots(b) -- Move bots around
 	local old_x=0
 	local old_y=1
 	for i,v in ipairs(b) do
@@ -121,7 +134,7 @@ function love.load()
     
     love.graphics.setLine( 3, "smooth" )
     ship = love.graphics.newImage("ship.png")
-    cooldown = 0.01 -- delay before new shot, in seconds
+    cooldown = 0.3 -- delay before new shot, in seconds
     last_shot = cooldown -- time since last shot, initialized to allow immediate shooting at start
     bots = {} --Table containing all the bots
 	table.insert(bots,Bot.create(5, 90, 1, 10)) --Create a first bot
@@ -149,7 +162,7 @@ function love.update(dt)
     end
     shot_type = "cl" -- ugly hack for 2 lines under
     if (love.mouse.isDown( "l" ) and last_shot >= cooldown) then
-        table.insert(shots, Shot.create(8, 3, 1, 400, 100, ch_angle))
+        table.insert(shots, Shot.create(8, 3, 1, 400, 20, ch_angle))
         last_shot = 0
     else
         last_shot = last_shot + dt
@@ -175,11 +188,12 @@ function love.draw()
     for i, v in ipairs(shots) do
 		love.graphics.draw (shots[i].image , shots[i].x, shots[i].y, shots[i].angle, 1, 1)
     end
-	
+	love.graphics.setColor(255,0,0,255)
 	for j,v in ipairs(bots) do
-    love.graphics.circle ("line", bots[j].x, bots[j].y, 10, 3)
+		love.graphics.setColor(255,0,0,bots[j].health/bots[j].max_health*255)
+		love.graphics.circle ("line", bots[j].x, bots[j].y, 10, 3)
     end
-	
+	love.graphics.setColor(255,255,255,255)
     --=== Debug
     --love.graphics.print (bots[j].x ,45, 120)
     --love.graphics.print(last_shot, 100, 200)
