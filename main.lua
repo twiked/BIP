@@ -1,6 +1,6 @@
 --================ Class definitions
 Shot = {} --Shot class
-function Shot:create(width, height, speed, mode, damage, angle)
+function Shot.create(width, height, mode, speed, damage, angle)
     local sht = {}
     sht.x=player_x
     sht.y=player_y
@@ -18,27 +18,30 @@ function Shot:create(width, height, speed, mode, damage, angle)
 end
 
 Bot = {} -- Bots table
-function Bot:create(x, y, speed)
+function Bot.create(x, y, speed)
     local bt = {}
     -- bt.x = math.random(0, win_width)
     -- bt.y = math.random(0, win_height)
     bt.x = x
     bt.y = y
+    bt.health = 100
 	bt.width=5
 	bt.height=2
 	bt.angle=0
 	bt.vx = 0
 	bt.vy = 0
 	bt.speed = 100
+	function bt:hit(hitter)
+		bt.health = bt.health - hitter.damage
+	end
     return bt
 end
 
 
 --================
 
-function check_collision(a, b, precision)
+function check_collision(a, b)
 if (a.x + a.width > b.x) and (a.x < b.x + b.width) and (a.y + a.height > b.y) and (a.y < b.y + b.height) then
-    --if((a.x/precision) == (b.x/precision) and (a.y/precision) == (b.y/precision)) then
         return true
     else
         return false
@@ -49,6 +52,10 @@ function move_bots(b,dt) -- Move bots around
 	local old_x=0
 	local old_y=1
 	for i,v in ipairs(b) do
+		if b[i].health <= 0 then
+			table.remove(b,i)
+			break
+		end
 		old_x=b[i].x
 		old_y=b[i].y
 		b[i].angle = -math.atan2((player_x-b[i].x),(player_y)-b[i].y) + math.pi/2
@@ -69,12 +76,13 @@ function adv_shots(s, obj, dt) -- Move the shots further and check collisions
 		s[i].y = s[i].y + dt * s[i].speed * s[i].vy
 		if ( s[i].x < 0 or s[i].x > win_width or s[i].y < 0 or s[i].y > win_height) then
 			table.remove(s, i)
-		end
-		
-		--Check collision between shots and items
-		for i, v in ipairs(bots) do
-			if check_collision(s[i],obj[i]) then
-				obj[i].hit(s[i])
+		else
+			--Check collision between shots and items
+			for j, y in ipairs(obj) do
+				if check_collision(s[i],obj[j]) then
+					boom = boom + 1
+					obj[i].hit(s[i])
+				end
 			end
 		end
     end
@@ -99,7 +107,7 @@ function love.load()
     ch_iradius=40
     ch_oradius=45
     
-    --love.graphics.setLine( 3, "smooth" )
+    love.graphics.setLine( 3, "smooth" )
     ship = love.graphics.newImage("ship.png")
     cooldown = 0.5 -- delay before new shot, in seconds
     last_shot = cooldown -- time since last shot, initialized to allow immediate shooting at start
@@ -123,14 +131,14 @@ function love.update(dt)
     elseif love.keyboard.isDown("up") and player_y > 0 then
         player_y = player_y - (player_speed * dt)
     end
-    
+    shot_type = "cl" -- ugly hack for 2 lines under
     if (love.mouse.isDown( "l" ) and last_shot >= cooldown) then
-        table.insert(shots, Shot.create(6, 3, 400, 100, "cl", ch_angle))
+        table.insert(shots, Shot.create(6, 3, 1, 400, 100, ch_angle))
         last_shot = 0
     else
         last_shot = last_shot + dt
     end
-    adv_shots(shots, dt)
+    adv_shots(shots, bots, dt)
     move_bots(bots, dt)
     mouse_x = love.mouse.getX()
     mouse_y = love.mouse.getY()
@@ -152,16 +160,16 @@ function love.draw()
 	
 	for j,v in ipairs(bots) do
     love.graphics.circle ("line", bots[j].x, bots[j].y, 20, 3)
-    --love.graphics.print (bots[j].x ,45, 120)
     end
 	
     --=== Debug
+    --love.graphics.print (bots[j].x ,45, 120)
     --love.graphics.print(last_shot, 100, 200)
     --if (#shots >= 1) then
     --love.graphics.print(math.floor(shots[1].x) .. "*" .. math.floor(shots[1].y), 100, 100)
     --end
      if (boom) then
-         love.graphics.print("BOOOOM" .. boom, 100, 300)
+         love.graphics.print("Hits : " .. boom, 100, 300)
      end
     --love.graphics.print( #shots, 50, 200)
 	love.graphics.print("FPS: " .. love.timer.getFPS(), 540, 10)
