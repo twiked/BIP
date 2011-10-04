@@ -20,8 +20,6 @@ end
 Bot = {} -- Bots table
 function Bot.create(x, y, speed, rew)
     local bt = {}
-    -- bt.x = math.random(0, win_width)
-    -- bt.y = math.random(0, win_height)
     bt.x = x
     bt.y = y
 	bt.max_health = 100
@@ -40,6 +38,16 @@ function Bot.create(x, y, speed, rew)
     return bt
 end
 
+Player = {}
+function Player.Create(x,y)
+	local pl = {}
+	pl.x = x
+	pl.y = y
+	pl.firemode = 0
+	pl.ch_angle = 0
+	pl.speed = 300
+	return pl
+end
 
 --================
 
@@ -87,6 +95,9 @@ function move_bots(b) -- Move bots around
 		b[i].vy = math.sin(b[i].angle)
 		b[i].x = b[i].x + b[i].vx * b[i].speed
 		b[i].y = b[i].y + b[i].vy * b[i].speed
+		if(check_collision(b[i], players[1])) then
+			Game = false
+		end
 		if (b[i].x < 0 or  b[i].x > win_width or b[i].y < 0 or b[i].y > win_height) then
 			b[i].x = old_x
 			b[i].y = old_y
@@ -113,15 +124,21 @@ function adv_shots(s, obj, dt) -- Move the shots further and check collisions
 end
 
 function love.load()
+
+	Game = true
+	
+	-- Windows definitions
 	love.graphics.setCaption( "BIP" ) --Defining window title
     win_height = love.graphics.getHeight()
     win_width = love.graphics.getWidth()
-    player_x = win_height/2;
-    player_y = win_width/2;
+    
     mouse_x = 0
     mouse_y = 0
-    player_speed = 300
-    ch_angle=0
+	
+	-- player definitions
+	players = {}
+	players[1] = Player.create(win_width/2, win_height/2)
+    
     score = 0
 	
     -- crosshair definitions
