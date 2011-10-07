@@ -27,7 +27,7 @@ function Bot.create(x, y, speed, rew)
 	bt.color = bt.health
 	bt.width = 20
 	bt.height = 20
-	bt.reward = rew
+	bt.reward = rew --Gain obtained by player killing it
 	bt.angle = 0
 	bt.vx = 0
 	bt.vy = 0
@@ -65,17 +65,17 @@ function spawn_bot()
 		if (player_y > win_height/2) then
 			x1,y1,x2,y2 = 0,0, x2-20,y2-20
 		else
-			x1,y1,x2,y2 = 0, win_height,x2-20, y2+20
+			x1,y2,x2,y1 = 0, win_height,x2-20, y2+20
 		end
 	else
 		if (player_y > win_height/2) then
-			x1,y1,x2,y2 = win_width, 0,x2+20,y2-20
+			x2,y1,x2,y1 = win_width, 0,x2+20,y2-20
 		else
-			x1,y1,x2,y2 = win_width, win_height,x2+20,y2+20
+			x2,y2,x2,y2 = win_width, win_height,x2+20,y2+20
 		end
 	end
 	sp = math.random(1,20)/10
-	x1,x2,y1,y2 = math.min(x1,x2),math.max(x1,x2),math.min(y1,y2),math.max(y1,y2)
+	--x1,x2,y1,y2 = math.min(x1,x2),math.max(x1,x2),math.min(y1,y2),math.max(y1,y2)
 	table.insert(bots,Bot.create(math.random(x1, x2), math.random(y1, y2), sp, sp*1000))
 end
 
