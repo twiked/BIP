@@ -18,20 +18,25 @@ function Shot.create(width, height, mode, speed, damage, angle)
 end
 
 Bot = {} -- Bots table
-function Bot.create(x, y, speed, rew)
+function Bot.create(x, y, speed, rew) -- no more speed argument ? (determined by rew ?)
     local bt = {}
     bt.x = x
     bt.y = y
-	bt.max_health = 100
+    --bt.max_health = math.random(50,200) -- random health
+    bt.max_health = math.random(rew/20 +10, rew/2) -- health determined by rew (+10 is for low rewarding bots)
+	--bt.max_health = 100 --old fixed health or should the same class bots have same health ?
     bt.health = bt.max_health
-	bt.color = bt.health
+	bt.color = bt.health -- not sure if this will not be screwed by random health
+	
 	bt.width = 20
 	bt.height = 20
 	bt.reward = rew --Gain obtained by player killing it
 	bt.angle = 0
 	bt.vx = 0
 	bt.vy = 0
-	bt.speed = speed
+	
+	--bt.speed = speed
+	bt.speed = (rew/10) / bt.max_health -- that will make bots with lots of HP slow
 	function bt.hit(hitter)
 		bt.health = bt.health - hitter.damage
 	end
