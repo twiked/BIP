@@ -2,8 +2,8 @@
 Shot = {} --Shot class
 function Shot.create(width, height, mode, speed, damage, angle)
     local sht = {}
-    sht.x = player_x
-    sht.y = player_y
+    sht.x = players[1].x
+    sht.y = players[1].y
     sht.angle = ch_angle
     sht.speed = speed
     sht.damage = damage
@@ -23,8 +23,8 @@ function Bot.create(x, y, speed, rew) -- no more speed argument ? (determined by
     bt.x = x
     bt.y = y
     --bt.max_health = math.random(50,200) -- random health
-    bt.max_health = math.random(rew/20 +10, rew/2) -- health determined by rew (+10 is for low rewarding bots)
-	--bt.max_health = 100 --old fixed health or should the same class bots have same health ?
+    --bt.max_health = math.random(rew/20 +10, rew/2) -- health determined by rew (+10 is for low rewarding bots)
+	bt.max_health = 100 --old fixed health or should the same class bots have same health ?
     bt.health = bt.max_health
 	bt.color = bt.health -- not sure if this will not be screwed by random health
 	
@@ -44,10 +44,12 @@ function Bot.create(x, y, speed, rew) -- no more speed argument ? (determined by
 end
 
 Player = {}
-function Player.Create(x,y)
+function Player.create(x,y)
 	local pl = {}
 	pl.x = x
 	pl.y = y
+	pl.width = 10
+	pl.height = 10
 	pl.firemode = 0
 	pl.ch_angle = 0
 	pl.speed = 300
@@ -65,15 +67,15 @@ if (a.x + a.width > b.x) and (a.x < b.x + b.width) and (a.y + a.height > b.y) an
 end
 
 function spawn_bot()
-	local x1,y1,x2,y2=0,0,player_x, player_y
-	if(player_x > win_width/2) then
-		if (player_y > win_height/2) then
+	local x1,y1,x2,y2=0,0,players[1].x, players[1].y
+	if(players[1].x > win_width/2) then
+		if (players[1].y > win_height/2) then
 			x1,y1,x2,y2 = 0,0, x2-20,y2-20
 		else
 			x1,y2,x2,y1 = 0, win_height,x2-20, y2+20
 		end
 	else
-		if (player_y > win_height/2) then
+		if (players[1].y > win_height/2) then
 			x2,y1,x2,y1 = win_width, 0,x2+20,y2-20
 		else
 			x2,y2,x2,y2 = win_width, win_height,x2+20,y2+20
@@ -95,7 +97,7 @@ function move_bots(b) -- Move bots around
 		end
 		old_x=b[i].x
 		old_y=b[i].y
-		b[i].angle = -math.atan2((player_x-b[i].x),(player_y)-b[i].y) + math.pi/2
+		b[i].angle = -math.atan2((players[1].x-b[i].x),(players[1].y)-b[i].y) + math.pi/2
 		b[i].vx = math.cos(b[i].angle)
 		b[i].vy = math.sin(b[i].angle)
 		b[i].x = b[i].x + b[i].vx * b[i].speed
@@ -171,16 +173,16 @@ function love.update(dt)
 		bot_ctr = 0
 		spawn_bot()
 	end
-    if (love.keyboard.isDown("right") and player_x < win_width) then
-        player_x = player_x + (player_speed * dt)
-    elseif (love.keyboard.isDown("left") and player_x > 0) then
-        player_x = player_x - (player_speed * dt)
+    if (love.keyboard.isDown("right") and players[1].x < win_width) then
+        players[1].x = players[1].x + (players[1].speed * dt)
+    elseif (love.keyboard.isDown("left") and players[1].x > 0) then
+        players[1].x = players[1].x - (players[1].speed * dt)
     end
     
-    if (love.keyboard.isDown("down") and player_y < win_height ) then
-        player_y = player_y + (player_speed * dt)
-    elseif love.keyboard.isDown("up") and player_y > 0 then
-        player_y = player_y - (player_speed * dt)
+    if (love.keyboard.isDown("down") and players[1].y < win_height ) then
+        players[1].y = players[1].y + (players[1].speed * dt)
+    elseif love.keyboard.isDown("up") and players[1].y > 0 then
+        players[1].y = players[1].y - (players[1].speed * dt)
     end
     shot_type = "cl" -- ugly hack for 2 lines under
     if (love.mouse.isDown( "l" ) and last_shot >= cooldown) then
@@ -195,17 +197,17 @@ function love.update(dt)
 	--end
     mouse_x = love.mouse.getX()
     mouse_y = love.mouse.getY()
-    ch_angle=-math.atan2((mouse_x-player_x),(mouse_y-player_y)) + math.pi/2
-    ch_x1=math.cos(ch_angle)*ch_iradius+player_x
-    ch_y1=math.sin(ch_angle)*ch_iradius+player_y
-    ch_x2=math.cos(ch_angle)*ch_oradius+player_x
-    ch_y2=math.sin(ch_angle)*ch_oradius+player_y
+    ch_angle=-math.atan2((mouse_x-players[1].x),(mouse_y-players[1].y)) + math.pi/2
+    ch_x1=math.cos(ch_angle)*ch_iradius+players[1].x
+    ch_y1=math.sin(ch_angle)*ch_iradius+players[1].y
+    ch_x2=math.cos(ch_angle)*ch_oradius+players[1].x
+    ch_y2=math.sin(ch_angle)*ch_oradius+players[1].y
 end
 
 function love.draw()
     --love.graphics.print("Hello World", 400, 300)
     --love.graphics.point(x,y)
-    love.graphics.draw( ship, player_x , player_y, ch_angle, 2, 2, 8, 8 )
+    love.graphics.draw( ship, players[1].x , players[1].y, ch_angle, 2, 2, 8, 8 )
     love.graphics.line( ch_x1, ch_y1, ch_x2, ch_y2 )
     for i, v in ipairs(shots) do
 		love.graphics.draw (shots[i].image , shots[i].x, shots[i].y, shots[i].angle, 1, 1)
