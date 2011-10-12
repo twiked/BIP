@@ -3,30 +3,30 @@ import pygame
 from pygame.locals import *
 pygame.init()
 def load():
-  class Bot:
-		x = 0,
-
-		y = 0,
-
-		max_health = 100,
-
-		health = max_health,
-
-		alpha = 255,
-
-		width = 20,
-
-		height = 20,
-
-		reward = 100,
-
-		angle = 0,
-
-		vx = 0,
-
-		vy = 0,
-
-		speed = 0.1
+	class Bot:
+	x = 0,
+	
+	y = 0,
+	
+	max_health = 100,
+	
+	health = max_health,
+	
+	alpha = 255,
+	
+	width = 20,
+	
+	height = 20,
+	
+	reward = 100,
+	
+	angle = 0,
+	
+	vx = 0,
+	
+	vy = 0,
+	
+	speed = 0.1
 	class Shot:
 		x = 0,
 
@@ -47,9 +47,7 @@ def load():
 		image = love.graphics.newImage("bullet" .. 1 .. ".png"),
 
 		-- vector of bullet
-
 		vx = math.cos(0),
-
 		vy = math.sin(0),
 	pygame.init()
 	screen = pygame.display.set_mode((150, 50))
@@ -82,4 +80,5 @@ while 1:
 	for event in pygame.event.get():
 		if event.type == QUIT:
 			return
+	update()
 	update()
