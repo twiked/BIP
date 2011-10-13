@@ -3,52 +3,44 @@ import pygame
 from pygame.locals import *
 pygame.init()
 def load():
+	class Player:
+		def __init__(self):
+			x = 0
+			y = 0
+			width = 20
+			height = 20
+			firemode = 0
+			ch_angle = 0
+			speed = 300
 	class Bot:
-	x = 0,
-	
-	y = 0,
-	
-	max_health = 100,
-	
-	health = max_health,
-	
-	alpha = 255,
-	
-	width = 20,
-	
-	height = 20,
-	
-	reward = 100,
-	
-	angle = 0,
-	
-	vx = 0,
-	
-	vy = 0,
-	
-	speed = 0.1
+		def __init__(self):
+			x = 0
+			y = 0
+			max_health = 100
+			health = max_health
+			alpha = 255
+			width = 20
+			height = 20
+			reward = 100
+			angle = 0
+			vx = 0
+			vy = 0
+			speed = 0.1
 	class Shot:
-		x = 0,
-
-		y = 0,
-
-		angle = 0,
-
-		speed = 100,
-
-		damage = 100,
-
-		width = 10,
-
-		height = 3,
-
-		mode = 1,
-
-		image = love.graphics.newImage("bullet" .. 1 .. ".png"),
-
-		-- vector of bullet
-		vx = math.cos(0),
-		vy = math.sin(0),
+		def __init__(self, x=0, y=0, angle=0, damage=100, width=):
+			x = 0
+			y = 0
+			angle = 0
+			speed = 100
+			damage = 100
+			width = 10
+			height = 3
+			mode = 1
+			image = love.graphics.newImage("bullet" .. mode .. ".png")
+	
+			-- vector of bullet
+			vx = math.cos(angle)
+			vy = math.sin(angle)
 	pygame.init()
 	screen = pygame.display.set_mode((150, 50))
 	pygame.display.set_caption('Biggest Idiotic Program')
@@ -75,10 +67,10 @@ def update():
 
 
 if __name__ == '__main__':
-load()
-while 1:
-	for event in pygame.event.get():
-		if event.type == QUIT:
-			return
-	update()
-	update()
+	load()
+	while 1:
+		for event in pygame.event.get():
+			if event.type == QUIT:
+				return
+		update()
+		draw()
