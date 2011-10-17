@@ -15,39 +15,39 @@ class Player:
 		ch_angle = 0
 		speed = 300
 class Bot:
-	def __init__(self):
-		x = 0
-		y = 0
-		max_health = 100
-		health = max_health
-		alpha = 255
-		width = 20
-		height = 20
-		reward = 100
-		angle = 0
-		vx = 0
-		vy = 0
-		speed = 0.1
+	def __init__(self, x=0, y=0, max_health=100, alpha=255):
+		self.x = x
+		self.y = y
+		self.max_health = max_health
+		self.health = max_health
+		self.alpha = alpha
+		self.width = width
+		self.height = 20
+		self.reward = 100
+		self.angle = 0
+		self.vx = 0
+		self.vy = 0
+		self.speed = 0.1
 	def hit(self, hitter):
 		self.health = self.health - hitter.damage
 class Shot:
-	def __init__(self, x=0, y=0, angle=0, damage=100, width=):
-		x = 0
-		y = 0
-		angle = 0
-		speed = 100
-		damage = 100
-		width = 10
-		height = 3
-		mode = 1
-		image = pygame.image.load("bullet" + mode + ".png")
+	def __init__(self, x=0, y=0, angle=0, damage=100, width=5, height=3, mode=1):
+		self.x = x
+		self.y = y
+		self.angle = angle
+		self.speed = speed
+		self.damage = damage
+		self.width = width
+		self.height = height
+		self.mode = mode
+		self.image = pygame.image.load("bullet" + mode + ".png")
 
 		# vector of bullet
-		vx = math.cos(angle)
-		vy = math.sin(angle)
-	def updt(self, dt = 1):
-		self.x += vx
-		self.y += vy
+		self.vx = math.cos(angle)
+		self.vy = math.sin(angle)
+	def update(self, dt = 1):
+		self.x += vx*dt
+		self.y += vy*dt
 
 def load():
 	pygame.init()
@@ -79,13 +79,14 @@ def update(dt):
 		spawn_bot()
 	if (love.keyboard.isDown("right") and players[1].x < win_width):
 		players[1].x = players[1].x + (players[1].speed * dt)
-	else if (love.keyboard.isDown("left") and players[1].x > 0) :
+	elif (love.keyboard.isDown("left") and players[1].x > 0) :
 		players[1].x = players[1].x - (players[1].speed * dt)
 	
 	if (love.keyboard.isDown("down") and players[1].y < win_height ):
 		players[1].y = players[1].y + (players[1].speed * dt)
-	else if love.keyboard.isDown("up") and players[1].y > 0 :
+	elif love.keyboard.isDown("up") and players[1].y > 0 :
 		players[1].y = players[1].y - (players[1].speed * dt)
+
 	if (love.mouse.isDown( "l" ) and last_shot >= cooldown):
 		table.insert(shots, Shot.create(width=8,3,400,20,players[1].ch_angle))
 		last_shot = 0
