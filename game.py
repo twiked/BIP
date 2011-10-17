@@ -40,7 +40,7 @@ class Shot:
 		width = 10
 		height = 3
 		mode = 1
-		image = love.graphics.newImage("bullet" .. mode .. ".png")
+		image = pygame.image.load("bullet" + mode + ".png")
 
 		# vector of bullet
 		vx = math.cos(angle)
