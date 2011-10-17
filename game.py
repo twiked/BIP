@@ -69,28 +69,26 @@ def load():
 	
 def update(dt):
 	bot_ctr = bot_ctr + dt
-	if ( bot_ctr >= 0.2):
+	if ( bot_ctr >= 0.2) :
 		bot_ctr = 0
 		spawn_bot()
-	if (love.keyboard.isDown("right") and players[1].x < win_width) then
+	if (love.keyboard.isDown("right") and players[1].x < win_width) :
 		players[1].x = players[1].x + (players[1].speed * dt)
-	else if (love.keyboard.isDown("left") and players[1].x > 0) then
+	else if (love.keyboard.isDown("left") and players[1].x > 0) :
 		players[1].x = players[1].x - (players[1].speed * dt)
 	
-	if (love.keyboard.isDown("down") and players[1].y < win_height ) then
+	if (love.keyboard.isDown("down") and players[1].y < win_height ) :
 		players[1].y = players[1].y + (players[1].speed * dt)
-	elseif love.keyboard.isDown("up") and players[1].y > 0 then
+	else if love.keyboard.isDown("up") and players[1].y > 0 :
 		players[1].y = players[1].y - (players[1].speed * dt)
-	end
-	if (love.mouse.isDown( "l" ) and last_shot >= cooldown) then
+	if (love.mouse.isDown( "l" ) and last_shot >= cooldown) :
 		table.insert(shots, Shot.create(width=8,3,400,20,players[1].ch_angle))
 		last_shot = 0
-	else
+	else :
 		last_shot = last_shot + dt
-	end
 	
 	adv_shots(shots, bots, dt)
-	move_bots(bots, dt):
+	move_bots(bots, dt)
 
 	mouse_x = love.mouse.getX()
 	mouse_y = love.mouse.getY()
