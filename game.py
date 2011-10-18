@@ -11,7 +11,12 @@ players = []
 bots = []
 shots = []
 
-
+bot_ctr = 0
+last_shot = 0
+ch_iradius = 3
+ch_oradius = 5
+mouse_x = 0
+mouse_y = 0
 dt = clock.get_time()
 screen = pygame.display.set_mode((640, 480))
 pygame.display.set_caption('Biggest Idiotic Program')
@@ -33,7 +38,7 @@ class Player:
 	def update(self):
 		self.x += self.vx
 		self.y += self.vy
-		self.ch_angle = math.atan2((mouse_x-self.x),(mouse_y-self.y)) + math.pi/2
+		self.ch_angle = -math.atan2((mouse_x-self.x),(mouse_y-self.y)) + math.pi/2
 	def hit(self, hitter):
 		self.health = self.health - hitter.damage
 		
@@ -72,18 +77,18 @@ class StandardBot(Bot):
 		y1 = 0
 		x2 = plx
 		y2 = ply
-	if(plx > win_width/2):
-		if (ply > win_height/2):
-			x1,y1,x2,y2 = 0,0, x2-20,y2-20
+		if(plx > win_width/2):
+			if (ply > win_height/2):
+				x1,y1,x2,y2 = 0,0, x2-20,y2-20
+			else:
+				x1,y2,x2,y1 = 0, win_height,x2-20, y2+20
 		else:
-			x1,y2,x2,y1 = 0, win_height,x2-20, y2+20
-	else:
-		if (ply > win_height/2):
-			x2,y1,x2,y1 = win_width, 0,x2+20,y2-20
-		else:
-			x2,y2,x2,y2 = win_width, win_height,x2+20,y2+20
-	self.speed = random.random()*10
-	bots.append(self)
+			if (ply > win_height/2):
+				x2,y1,x2,y1 = win_width, 0,x2+20,y2-20
+			else:
+				x2,y2,x2,y2 = win_width, win_height,x2+20,y2+20
+		self.speed = random.random()*10
+		bots.append(self)
 
 class Shot:
 	def __init__(self, x=0, y=0, angle=0, damage=100, width=5, height=3, mode="cl", speed=100):
@@ -95,7 +100,7 @@ class Shot:
 		self.width = width
 		self.height = height
 		self.mode = mode
-		self.image = pygame.image.load("bullet" + mode + ".png")
+		self.image = pygame.image.load("bullet" + mode + ".png").convert()
 
 		# vector of bullet
 		self.vx = math.cos(angle)
@@ -138,10 +143,10 @@ def update():
 	if keys[pygame.K_UP]: players[0].y -= 1
 	#Calculate crosshair coords
 	players[0].ch_angle=-math.atan2((mouse_x-players[0].x),(mouse_y-players[0].y)) + math.pi/2
-	ch_x1=math.cos(players[0].ch_angle)*ch_iradius+players[0].x
-	ch_y1=math.sin(players[0].ch_angle)*ch_iradius+players[0].y
-	ch_x2=math.cos(players[0].ch_angle)*ch_oradius+players[0].x
-	ch_y2=math.sin(players[0].ch_angle)*ch_oradius+players[0].y
+	players[0].ch_x1=math.cos(players[0].ch_angle)*ch_iradius+players[0].x
+	players[0].ch_y1=math.sin(players[0].ch_angle)*ch_iradius+players[0].y
+	players[0].ch_x2=math.cos(players[0].ch_angle)*ch_oradius+players[0].x
+	players[0].ch_y2=math.sin(players[0].ch_angle)*ch_oradius+players[0].y
 	players[0].update()
 
 def draw():
@@ -161,4 +166,4 @@ while True:
 	update()
 	draw()
 	pygame.display.update()
-	clock.tick()
+	clock.tick(60)
