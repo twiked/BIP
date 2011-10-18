@@ -13,8 +13,8 @@ shots = []
 
 bot_ctr = 0
 last_shot = 0
-ch_iradius = 3
-ch_oradius = 5
+ch_iradius = 40
+ch_oradius = 60
 mouse_x = 0
 mouse_y = 0
 dt = clock.get_time()
@@ -35,6 +35,7 @@ class Player:
 		self.firemode = 0
 		self.ch_angle = 0
 		self.speed = 300
+		self.image = pygame.image.load("ship.png").convert_alpha()
 	def update(self):
 		self.x += self.vx
 		self.y += self.vy
@@ -44,6 +45,12 @@ class Player:
 		
 #Add one player
 players.append(Player())
+
+def check_collision(a, b):
+	if (a.x + a.width > b.x) and (a.x < b.x + b.width) and (a.y + a.height > b.y) and (a.y < b.y + b.height):
+		return true
+	else:
+		return false
 
 
 class Bot:
@@ -129,7 +136,7 @@ def update():
 		if event.type == pygame.KEYDOWN:
 			pass
 		if event.type == pygame.MOUSEBUTTONDOWN:
-			if event.button == 1:
+			if event.button == 1 and last_shot > 10:
 				shots.append(Shot(players[0].x, players[0].y, players[0].ch_angle))
 				last_shot = 0
 		else:
@@ -150,7 +157,7 @@ def update():
 	players[0].update()
 
 def draw():
-	text = font.render("FPS :" + str(clock.get_fps()),True,(255,255,255))
+	text = font.render("Time :" + str(clock.get_time()) + " and " + str(dt),True,(255,255,255))
 	# Blit everything to the screen
 	screen.blit(background, (0, 0))
 	screen.blit(text, (0,0))
@@ -158,7 +165,9 @@ def draw():
 		pygame.draw.circle(screen, (255,255,255), (int(i.x), int(i.y)), 10)
 	for i in shots:
 		pygame.draw.circle(screen, (255,0,0), (int(i.x), int(i.y)), 10)
-	pygame.draw.circle(screen, (0,255,0), (int(players[0].x), int(players[0].y)), 30)
+	pygame.draw.line(screen, (255,255,255), (players[0].ch_x1, players[0].ch_y1), (players[0].ch_x2, players[0].ch_y2))
+	#screen.blit(players[0].image, (int(players[0].x) - players[0].width/2,int(players[0].y) - players[0].height/2))
+	screen.blit(pygame.transform.rotate(players[0].image, -math.degrees(players[0].ch_angle)),(int(players[0].x) - players[0].width/2,int(players[0].y) - players[0].height/2))
 	pygame.display.flip()
 
 while True:
@@ -166,4 +175,4 @@ while True:
 	update()
 	draw()
 	pygame.display.update()
-	clock.tick(60)
+	clock.tick_busy_loop()
