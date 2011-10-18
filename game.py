@@ -58,6 +58,10 @@ class Shot:
 		self.x += self.vx*dt
 		self.y += self.vy*dt
 
+
+pygame.init()
+clock = pygame.time.Clock()
+
 #Global table definitions
 bots = []
 players = []
@@ -77,21 +81,12 @@ ch_y2=0
 ch_iradius=40
 ch_oradius=45
 
-pygame.init()
-clock = pygame.time.Clock()
 dt = clock.get_time()
 screen = pygame.display.set_mode((640, 480))
 pygame.display.set_caption('Biggest Idiotic Program')
 background = pygame.Surface(screen.get_size())
 background = background.convert()
 background.fill((0, 0, 0))
-
-# Display some text
-font = pygame.font.Font(None, 36)
-text = font.render("Hello There", 1, (10, 10, 10))
-textpos = text.get_rect()
-textpos.centerx = background.get_rect().centerx
-background.blit(text, textpos)
 
 #Add one player
 players.append(Player())
@@ -142,19 +137,16 @@ def draw():
 	# Blit everything to the screen
 	screen.blit(background, (0, 0))
 	
-	pygame.display.flip()
-	pygame.display.update()
 	for i in bots:
 		pygame.draw.circle(screen, (255,255,255), (int(i.x), int(i.y)), 10)
+	for i in shots:
+		pygame.draw.circle(screen, (255,0,0), (int(i.x), int(i.y)), 10)
+	pygame.draw.circle(screen, (0,255,0), (int(players[1].x), int(players[1].y)), 30)
+	pygame.display.flip()
 
 while True:
 	dt = clock.get_time()
-	
-		#if(pygame.mouse.get_pressed()[0] and last_shot >= cooldown):
-			#shots.append(Shot(players[0].x, players[0].y, players[0].ch_angle))
-			#last_shot = 0
-		#else:
-			#last_shot += dt
 	update()
 	draw()
+	pygame.display.update()
 	clock.tick()
