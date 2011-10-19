@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 import pygame, math, random, sys
 from pygame.locals import *
 pygame.init()
