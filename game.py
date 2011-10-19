@@ -24,6 +24,15 @@ background = pygame.Surface(screen.get_size())
 background = background.convert()
 background.fill((0, 0, 0))
 
+def rot_center(image, angle):
+    """rotate an image while keeping its center and size"""
+    orig_rect = image.get_rect()
+    rot_image = pygame.transform.rotate(image, angle)
+    rot_rect = orig_rect.copy()
+    rot_rect.center = rot_image.get_rect().center
+    rot_image = rot_image.subsurface(rot_rect).copy()
+    return rot_image
+
 class Player:
 	def __init__(self):
 		self.x = 0
@@ -167,7 +176,8 @@ def draw():
 		pygame.draw.circle(screen, (255,0,0), (int(i.x), int(i.y)), 10)
 	pygame.draw.line(screen, (255,255,255), (players[0].ch_x1, players[0].ch_y1), (players[0].ch_x2, players[0].ch_y2))
 	#screen.blit(players[0].image, (int(players[0].x) - players[0].width/2,int(players[0].y) - players[0].height/2))
-	screen.blit(pygame.transform.rotate(players[0].image, -math.degrees(players[0].ch_angle)),(int(players[0].x) - players[0].width/2,int(players[0].y) - players[0].height/2))
+	#screen.blit(pygame.transform.rotate(players[0].image, -math.degrees(players[0].ch_angle)),(int(players[0].x) - players[0].width/2,int(players[0].y) - players[0].height/2))
+	screen.blit(pygame.transform.smoothscale(rot_center(players[0].image, -math.degrees(players[0].ch_angle)),(32,32)), (players[0].x-16, players[0].y-16))
 	pygame.display.flip()
 
 while True:
