@@ -46,9 +46,18 @@ class Player:
 		self.speed = 300
 		self.image = pygame.image.load("ship.png").convert_alpha()
 	def update(self):
-		self.x += self.vx
-		self.y += self.vy
+		keys = pygame.key.get_pressed()
+		if keys[pygame.K_RIGHT]: players[0].x += 1
+		if keys[pygame.K_LEFT]: players[0].x -= 1
+		if keys[pygame.K_DOWN]: players[0].y += 1
+		if keys[pygame.K_UP]: players[0].y -= 1
+		#self.x += self.vx
+		#self.y += self.vy
 		self.ch_angle = -math.atan2((mouse_x-self.x),(mouse_y-self.y)) + math.pi/2
+		self.ch_x1=math.cos(self.ch_angle)*ch_iradius+self.x
+		self.ch_y1=math.sin(self.ch_angle)*ch_iradius+self.y
+		self.ch_x2=math.cos(self.ch_angle)*ch_oradius+self.x
+		self.ch_y2=math.sin(self.ch_angle)*ch_oradius+self.y
 	def hit(self, hitter):
 		self.health = self.health - hitter.damage
 		
@@ -56,6 +65,7 @@ class Player:
 players.append(Player())
 
 def check_collision(a, b):
+	""" Check collisions between 2 objects. Object need to have x,y,width and height"""
 	if (a.x + a.width > b.x) and (a.x < b.x + b.width) and (a.y + a.height > b.y) and (a.y < b.y + b.height):
 		return true
 	else:
@@ -63,12 +73,11 @@ def check_collision(a, b):
 
 
 class Bot:
-	def __init__(self, x=0, y=0, max_health=100, alpha=255):
+	def __init__(self, x=0, y=0):
 		self.x = x
 		self.y = y
-		self.max_health = max_health
+		self.max_health = 100
 		self.health = max_health
-		self.alpha = alpha
 		self.width = 20
 		self.height = 20
 		self.reward = 100
@@ -88,11 +97,9 @@ class Bot:
 		self.y = self.y + self.vy * self.speed
 
 class StandardBot(Bot):
+	"""Bot with random spawn between the most far angle of the screen and player position. Random speed"""
 	def __init__(self, plx, ply):
-		x1 = 0
-		y1 = 0
-		x2 = plx
-		y2 = ply
+		x1, y1, x2, y2 = 0, 0, plx, ply
 		if(plx > win_width/2):
 			if (ply > win_height/2):
 				x1,y1,x2,y2 = 0,0, x2-20,y2-20
@@ -104,7 +111,6 @@ class StandardBot(Bot):
 			else:
 				x2,y2,x2,y2 = win_width, win_height,x2+20,y2+20
 		self.speed = random.random()*10
-		bots.append(self)
 
 class Shot:
 	def __init__(self, x=0, y=0, angle=0, damage=100, width=5, height=3, mode="cl", speed=100):
@@ -129,15 +135,19 @@ class Shot:
 def update():
 	global bot_ctr, dt, last_shot, mouse_x, mouse_y
 	bot_ctr += dt
-	if (bot_ctr >= 4000):
+	if (bot_ctr >= 3000):
 		bot_ctr = 0
-		bots.append(Bot(random.randrange(300), random.randrange(300)))
+		bots.append(StandardBot(random.randrange(300), random.randrange(300)))
 		
+	#Update every bot
 	for i in bots:
 		i.update(dt)
+
+	#Update every bot
 	for i in shots:
 		i.update(dt)
-		
+
+	#Event handling	
 	for event in pygame.event.get():
 		if event.type == QUIT:
 			pygame.quit()
@@ -152,24 +162,13 @@ def update():
 			last_shot += dt
 		if event.type == pygame.MOUSEMOTION:
 			mouse_x, mouse_y = event.pos
-	keys = pygame.key.get_pressed()
-	if keys[pygame.K_RIGHT]: players[0].x += 1
-	if keys[pygame.K_LEFT]: players[0].x -= 1
-	if keys[pygame.K_DOWN]: players[0].y += 1
-	if keys[pygame.K_UP]: players[0].y -= 1
-	#Calculate crosshair coords
-	players[0].ch_angle=-math.atan2((mouse_x-players[0].x),(mouse_y-players[0].y)) + math.pi/2
-	players[0].ch_x1=math.cos(players[0].ch_angle)*ch_iradius+players[0].x
-	players[0].ch_y1=math.sin(players[0].ch_angle)*ch_iradius+players[0].y
-	players[0].ch_x2=math.cos(players[0].ch_angle)*ch_oradius+players[0].x
-	players[0].ch_y2=math.sin(players[0].ch_angle)*ch_oradius+players[0].y
+	#Get direction keys and move accordingly	
 	players[0].update()
 
 def draw():
 	text = font.render("Time :" + str(clock.get_time()) + " and " + str(dt),True,(255,255,255))
-	# Blit everything to the screen
-	screen.blit(background, (0, 0))
-	screen.blit(text, (0,0))
+	screen.blit(background, (0, 0)) #Blit background to real screen
+	screen.blit(text, (0,0)) #Blit Text to real screen
 	for i in bots:
 		pygame.draw.circle(screen, (255,255,255), (int(i.x), int(i.y)), 10)
 	for i in shots:
@@ -181,8 +180,8 @@ def draw():
 	pygame.display.flip()
 
 while True:
-	dt = clock.get_time()
-	update()
+	dt = clock.get_time() #Time since last frame
+	update() #Update coords
 	draw()
-	pygame.display.update()
-	clock.tick_busy_loop()
+	pygame.display.update() #Send the frame to GPU
+	clock.tick_busy_loop() #Advance the time precisely
