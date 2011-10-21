@@ -18,7 +18,9 @@ ch_oradius = 60
 mouse_x = 0
 mouse_y = 0
 dt = clock.get_time()
-screen = pygame.display.set_mode((640, 480))
+win_width = 640
+win_height = 480
+screen = pygame.display.set_mode((win_width, win_height))
 pygame.display.set_caption('Biggest Idiotic Program')
 background = pygame.Surface(screen.get_size())
 background = background.convert()
@@ -77,7 +79,7 @@ class Bot:
 		self.x = x
 		self.y = y
 		self.max_health = 100
-		self.health = max_health
+		self.health = self.max_health
 		self.width = 20
 		self.height = 20
 		self.reward = 100
@@ -95,6 +97,9 @@ class Bot:
 		self.vy = math.sin(self.angle)
 		self.x = self.x + self.vx * self.speed
 		self.y = self.y + self.vy * self.speed
+	def spawn(self):
+		pass
+	
 
 class StandardBot(Bot):
 	"""Bot with random spawn between the most far angle of the screen and player position. Random speed"""
@@ -102,15 +107,27 @@ class StandardBot(Bot):
 		x1, y1, x2, y2 = 0, 0, plx, ply
 		if(plx > win_width/2):
 			if (ply > win_height/2):
-				x1,y1,x2,y2 = 0,0, x2-20,y2-20
+				x1,y1,x2,y2 = 0,0, plx-20,ply-20
 			else:
-				x1,y2,x2,y1 = 0, win_height,x2-20, y2+20
+				x1,y1,x2,y2 = 0, ply+20,plx-20, win_height
 		else:
 			if (ply > win_height/2):
-				x2,y1,x2,y1 = win_width, 0,x2+20,y2-20
+				x1,y1,x2,y2 = plx+20, 0, win_width,ply-20
 			else:
-				x2,y2,x2,y2 = win_width, win_height,x2+20,y2+20
-		self.speed = random.random()*10
+				x1,y1,x2,y2 = plx+20, ply+20, win_width, win_height
+		x1,x2,y1,y2 = 0,0,100,100
+		self.x = random.randint(x1, x2)
+		self.y = random.randint(y1, y2)
+		print x1, y1, x2, y2
+		self.speed = random.random();
+		self.max_health = 100
+		self.health = self.max_health
+		self.width = 20
+		self.height = 20
+		self.reward = 100
+		self.angle = 0
+		self.vx = 0
+		self.vy = 0
 
 class Shot:
 	def __init__(self, x=0, y=0, angle=0, damage=100, width=5, height=3, mode="cl", speed=100):
@@ -137,7 +154,7 @@ def update():
 	bot_ctr += dt
 	if (bot_ctr >= 3000):
 		bot_ctr = 0
-		bots.append(StandardBot(random.randrange(300), random.randrange(300)))
+		bots.append(StandardBot(players[0].x, players[0].y))
 		
 	#Update every bot
 	for i in bots:
@@ -166,7 +183,7 @@ def update():
 	players[0].update()
 
 def draw():
-	text = font.render("Time :" + str(clock.get_time()) + " and " + str(dt),True,(255,255,255))
+	text = font.render("Deb:",True,(255,255,255))
 	screen.blit(background, (0, 0)) #Blit background to real screen
 	screen.blit(text, (0,0)) #Blit Text to real screen
 	for i in bots:
@@ -184,4 +201,5 @@ while True:
 	update() #Update coords
 	draw()
 	pygame.display.update() #Send the frame to GPU
-	clock.tick_busy_loop() #Advance the time precisely
+	#Advance the time precisely
+	clock.tick_busy_loop()
