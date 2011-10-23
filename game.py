@@ -1,4 +1,5 @@
 #!/usr/bin/python2
+
 import pygame, math, random, sys
 from pygame.locals import *
 pygame.init()
@@ -27,7 +28,7 @@ background = background.convert()
 background.fill((0, 0, 0))
 
 def rot_center(image, angle):
-    """rotate an image while keeping its center and size"""
+    """Rotate an image while keeping its center and size"""
     orig_rect = image.get_rect()
     rot_image = pygame.transform.rotate(image, angle)
     rot_rect = orig_rect.copy()
@@ -67,7 +68,7 @@ class Player:
 players.append(Player())
 
 def check_collision(a, b):
-	""" Check collisions between 2 objects. Object need to have x,y,width and height"""
+	"""Check collisions between 2 objects. Object must have x,y,width and height attributes"""
 	if (a.x + a.width > b.x) and (a.x < b.x + b.width) and (a.y + a.height > b.y) and (a.y < b.y + b.height):
 		return true
 	else:
@@ -75,6 +76,7 @@ def check_collision(a, b):
 
 
 class Bot:
+	"""Generic bot class"""
 	def __init__(self, x=0, y=0):
 		self.x = x
 		self.y = y
@@ -97,8 +99,6 @@ class Bot:
 		self.vy = math.sin(self.angle)
 		self.x = self.x + self.vx * self.speed
 		self.y = self.y + self.vy * self.speed
-	def spawn(self):
-		pass
 	
 
 class StandardBot(Bot):
@@ -107,29 +107,23 @@ class StandardBot(Bot):
 		x1, y1, x2, y2 = 0, 0, plx, ply
 		if(plx > win_width/2):
 			if (ply > win_height/2):
+				print "Quarter 3"
 				x1,y1,x2,y2 = 0,0, plx-20,ply-20
 			else:
+				print "Quarter 2"
 				x1,y1,x2,y2 = 0, ply+20,plx-20, win_height
 		else:
 			if (ply > win_height/2):
+				print "Quarter 4"
 				x1,y1,x2,y2 = plx+20, 0, win_width,ply-20
 			else:
-				x1,y1,x2,y2 = plx+20, ply+20, win_width, win_height
-		x1,x2,y1,y2 = 0,0,100,100
-		self.x = random.randint(x1, x2)
-		self.y = random.randint(y1, y2)
-		print x1, y1, x2, y2
-		self.speed = random.random();
-		self.max_health = 100
-		self.health = self.max_health
-		self.width = 20
-		self.height = 20
-		self.reward = 100
-		self.angle = 0
-		self.vx = 0
-		self.vy = 0
+				print "Quarter 1"
+				x1,y1,x2,y2 = plx+20, ply+20, win_width, win_height	
+		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2))
+		print self.x, self.y
 
 class Shot:
+	"""Generic shot class"""
 	def __init__(self, x=0, y=0, angle=0, damage=100, width=5, height=3, mode="cl", speed=100):
 		self.x = x
 		self.y = y
@@ -141,7 +135,7 @@ class Shot:
 		self.mode = mode
 		self.image = pygame.image.load("bullet" + mode + ".png").convert()
 
-		# vector of bullet
+		# vector of shot
 		self.vx = math.cos(angle)
 		self.vy = math.sin(angle)
 	def update(self, dt = 1):
