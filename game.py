@@ -48,6 +48,7 @@ class Player:
 		self.ch_angle = 0
 		self.speed = 300
 		self.image = pygame.image.load("ship.png").convert_alpha()
+		self.health = 100
 	def update(self):
 		keys = pygame.key.get_pressed()
 		if keys[pygame.K_RIGHT]: players[0].x += 1
@@ -99,13 +100,15 @@ class Bot:
 		self.vy = math.sin(self.angle)
 		self.x = self.x + self.vx * self.speed
 		self.y = self.y + self.vy * self.speed
+	def display:
+		"""Method for printing the bot to screen """
+		pass
 	
 """
 class BotSubClassType(Bot):
 	# Bot with random spawn between the most far angle of the screen and player position. Random speed
 	def __init__(self, plx, ply):	
-		super(SubClassType, self).__init__(self, plx, ply)
-"""
+		Class.__init__(self, plx, ply)"""
 
 class StandardBot(Bot):
 	"""Bot with random spawn between the most far angle of the screen and player position. Random speed"""
@@ -140,7 +143,7 @@ class Shot:
 		self.height = height
 		self.mode = mode
 		self.image = pygame.image.load("bullet" + mode + ".png").convert()
-
+		
 		# vector of shot
 		self.vx = math.cos(angle)
 		self.vy = math.sin(angle)
@@ -148,10 +151,11 @@ class Shot:
 		self.x += self.vx*dt*(self.speed/100) # use speed of bot in calculation
 		self.y += self.vy*dt*(self.speed/100)
 
-class RocketShot(Shot): # small rocket propelled bullet that goes faster with time
-	"""Rocket shot class"""	#higher damage - lower initial speed -- might as well change 'mode'
+class RocketShot(Shot): 
+	"""Small rocket propelled bullet that goes faster with time. Higher damage - lower initial speed -- might as well change 'mode' """
+	
 	def __init__(self, x=0, y=0, angle=0, damage=150, width=5, height=3, mode="cl", speed=50):
-		super(RocketShot, self).__init__(self, x, y, angle, damage, width, height, mode, speed) # calls __init__ from parent
+		Shot.__init__(self, x, y, angle, damage, width, height, mode, speed) # calls __init__ from parent
 
 	def update(self, dt = 1): # override parent's update
 		self.x += self.vx*dt*(self.speed/100) # use speed of bot in calculation
