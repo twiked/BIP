@@ -2,7 +2,6 @@
 
 import pygame, math, random, sys
 from pygame.locals import *
-pygame.init()
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -64,6 +63,8 @@ class Player:
 		self.ch_y2=math.sin(self.ch_angle)*ch_oradius+self.y
 	def hit(self, hitter):
 		self.health = self.health - hitter.damage
+	def draw(self):
+		screen.blit(pygame.transform.smoothscale(rot_center(self.image, -math.degrees(self.ch_angle)),(32,32)), (self.x-16, self.y-16))
 		
 #Add one player
 players.append(Player())
@@ -102,6 +103,7 @@ class Bot:
 		self.y = self.y + self.vy * self.speed
 	def display:
 		"""Method for printing the bot to screen """
+		pygame.draw.circle(screen, (255,255,255), (int(self.x), int(self.y)), 10)
 		pass
 	
 """
@@ -150,6 +152,8 @@ class Shot:
 	def update(self, dt = 1):
 		self.x += self.vx*dt*(self.speed/100) # use speed of bot in calculation
 		self.y += self.vy*dt*(self.speed/100)
+	def draw(self):
+		pygame.draw.circle(screen, (255,0,0), (int(self.x), int(self.y)), 10)
 
 class RocketShot(Shot): 
 	"""Small rocket propelled bullet that goes faster with time. Higher damage - lower initial speed -- might as well change 'mode' """
@@ -199,14 +203,14 @@ def draw():
 	text = font.render("Deb:",True,(255,255,255))
 	screen.blit(background, (0, 0)) #Blit background to real screen
 	screen.blit(text, (0,0)) #Blit Text to real screen
-	for i in bots:
-		pygame.draw.circle(screen, (255,255,255), (int(i.x), int(i.y)), 10)
-	for i in shots:
-		pygame.draw.circle(screen, (255,0,0), (int(i.x), int(i.y)), 10)
+	for i in bots: #Draw every bot to scree
+		i.draw()
+	for i in shots: #Draw every shot to scree
+		i.draw()
 	pygame.draw.line(screen, (255,255,255), (players[0].ch_x1, players[0].ch_y1), (players[0].ch_x2, players[0].ch_y2))
 	#screen.blit(players[0].image, (int(players[0].x) - players[0].width/2,int(players[0].y) - players[0].height/2))
 	#screen.blit(pygame.transform.rotate(players[0].image, -math.degrees(players[0].ch_angle)),(int(players[0].x) - players[0].width/2,int(players[0].y) - players[0].height/2))
-	screen.blit(pygame.transform.smoothscale(rot_center(players[0].image, -math.degrees(players[0].ch_angle)),(32,32)), (players[0].x-16, players[0].y-16))
+	
 	pygame.display.flip()
 
 while True:
