@@ -1,0 +1,9 @@
+- Add player life
+- Check collision (Player vs bots, Bullets vs Bots)
+- End Game
+- Display bot health somehow
+
+Low priority :
+
+- Add more type of bots
+- Add more type of bullets
