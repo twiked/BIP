@@ -100,24 +100,30 @@ class Bot:
 		self.x = self.x + self.vx * self.speed
 		self.y = self.y + self.vy * self.speed
 	
+"""
+class BotSubClassType(Bot):
+	# Bot with random spawn between the most far angle of the screen and player position. Random speed
+	def __init__(self, plx, ply):	
+		super(SubClassType, self).__init__(self, plx, ply)
+"""
 
 class StandardBot(Bot):
 	"""Bot with random spawn between the most far angle of the screen and player position. Random speed"""
 	def __init__(self, plx, ply):
 		x1, y1, x2, y2 = 0, 0, plx, ply
-		if(plx > win_width/2):
+		if(plx > win_width/2): #bottom screen
 			if (ply > win_height/2):
-				print "Quarter 3"
+				print "Quarter 3 == player in bottom right corner"
 				x1,y1,x2,y2 = 0,0, plx-20,ply-20
 			else:
-				print "Quarter 2"
+				print "Quarter 2 == player in bottom left corner"
 				x1,y1,x2,y2 = 0, ply+20,plx-20, win_height
-		else:
+		else: #top screen
 			if (ply > win_height/2):
-				print "Quarter 4"
+				print "Quarter 4 == player in top right corner"
 				x1,y1,x2,y2 = plx+20, 0, win_width,ply-20
 			else:
-				print "Quarter 1"
+				print "Quarter 1 == player in top left corner"
 				x1,y1,x2,y2 = plx+20, ply+20, win_width, win_height	
 		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2))
 		print self.x, self.y
