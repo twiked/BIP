@@ -139,9 +139,18 @@ class Shot:
 		self.vx = math.cos(angle)
 		self.vy = math.sin(angle)
 	def update(self, dt = 1):
-		self.x += self.vx*dt
-		self.y += self.vy*dt
+		self.x += self.vx*dt*(self.speed/100) # use speed of bot in calculation
+		self.y += self.vy*dt*(self.speed/100)
 
+class RocketShot(Shot): # small rocket propelled bullet that goes faster with time
+	"""Rocket shot class"""	#higher damage - lower initial speed -- might as well change 'mode'
+	def __init__(self, x=0, y=0, angle=0, damage=150, width=5, height=3, mode="cl", speed=50):
+		super(RocketShot, self).__init__(self, x, y, angle, damage, width, height, mode, speed) # calls __init__ from parent
+
+	def update(self, dt = 1): # override parent's update
+		self.x += self.vx*dt*(self.speed/100) # use speed of bot in calculation
+		self.y += self.vy*dt*(self.speed/100)
+		self.speed += 2 # increase shot speed -- higher increase might be better
 
 def update():
 	global bot_ctr, dt, last_shot, mouse_x, mouse_y
@@ -169,8 +178,8 @@ def update():
 			if event.button == 1 and last_shot > 10:
 				shots.append(Shot(players[0].x, players[0].y, players[0].ch_angle))
 				last_shot = 0
-		else:
-			last_shot += dt
+		# else: ## this doesn't make any sense
+		last_shot += dt
 		if event.type == pygame.MOUSEMOTION:
 			mouse_x, mouse_y = event.pos
 	#Get direction keys and move accordingly	
