@@ -48,6 +48,7 @@ class Player:
 		self.speed = 300
 		self.image = pygame.image.load("ship.png").convert_alpha()
 		self.health = 100
+		self.damage = 9000
 		self.shots = []
 		self.isshooting = False
 		self.last_shot = 0
@@ -70,10 +71,11 @@ class Player:
 			self.last_shot = 0
 		self.last_shot += dt
 		for i in self.shots:
+			i.check_collision()
 			i.update(dt)
 
 	def hit(self, hitter):
-		self.health = self.health - hitter.damage
+		self.health -= hitter.damage
 			
 	def draw(self):
 		screen.blit(pygame.transform.smoothscale(rot_center(self.image, -math.degrees(self.ch_angle)),(32,32)), (self.x-16, self.y-16))
@@ -84,9 +86,9 @@ players.append(Player())
 def check_collision(a, b):
 	"""Check collisions between 2 objects. Object must have x,y,width and height attributes"""
 	if (a.x + a.width > b.x) and (a.x < b.x + b.width) and (a.y + a.height > b.y) and (a.y < b.y + b.height):
-		return true
+		return True
 	else:
-		return false
+		return False
 
 
 class Bot:
@@ -103,6 +105,7 @@ class Bot:
 		self.vx = 0
 		self.vy = 0
 		self.speed = 0.1
+		self.damage = 9000
 		
 	def hit(self, hitter):
 		self.health = self.health - hitter.damage
@@ -119,7 +122,13 @@ class Bot:
 	def draw(self):
 		"""Method for printing the bot to screen """
 		pygame.draw.circle(screen, (255,255,255), (int(self.x), int(self.y)), 10)
-		pass
+		
+	def check_collision(self):
+		global players
+		for j in players:
+			if check_collision(self, j):
+				j.hit(self)
+				self.hit(j)
 	
 """
 class BotSubClassType(Bot):
@@ -158,19 +167,29 @@ class Shot:
 		self.damage = damage
 		self.width = width
 		self.height = height
+		self.health = 100
 		self.mode = mode
 		self.image = pygame.image.load("bullet" + mode + ".png").convert()
 		
 		# vector of shot
 		self.vx = math.cos(angle)
 		self.vy = math.sin(angle)
-	def update(self, dt = 1):
 		
+	def update(self, dt = 1):
 		self.x += self.vx*dt*(self.speed/100) # use speed of bot in calculation
 		self.y += self.vy*dt*(self.speed/100)
-	def draw(self):
 		
+	def hit(self, hitter):
+		self.health -= hitter.damage
+	
+	def draw(self):
 		pygame.draw.circle(screen, (255,0,0), (int(self.x), int(self.y)), 10)
+		
+	def check_collision(self):
+		for i in bots[:]:
+			if check_collision(self, i):
+				i.hit(self)
+				self.hit(i)
 
 class RocketShot(Shot): 
 	"""Small rocket propelled bullet that goes faster with time. Higher damage - lower initial speed -- might as well change 'mode' """
@@ -193,8 +212,11 @@ def update():
 		bots.append(StandardBot(players[0].x, players[0].y))
 		
 	#Update every bot
-	for i in bots:
+	for i in bots[:]:
 		i.update(dt)
+		if i.check_collision():
+			print "Collision"
+			bots.remove(i)
 
 	#Event handling	
 	for event in pygame.event.get():
