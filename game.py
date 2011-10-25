@@ -37,8 +37,8 @@ def rot_center(image, angle):
 
 class Player:
 	def __init__(self):
-		self.x = 0
-		self.y = 0
+		self.x = win_width/2
+		self.y = win_height/2
 		self.vx = 0
 		self.vy = 0
 		self.width = 20
@@ -48,6 +48,8 @@ class Player:
 		self.speed = 300
 		self.image = pygame.image.load("ship.png").convert_alpha()
 		self.health = 100
+		self.shots = []
+		self.isshooting = False
 	def update(self):
 		keys = pygame.key.get_pressed()
 		if keys[pygame.K_RIGHT]: players[0].x += 1
@@ -101,7 +103,7 @@ class Bot:
 		self.vy = math.sin(self.angle)
 		self.x = self.x + self.vx * self.speed
 		self.y = self.y + self.vy * self.speed
-	def display:
+	def draw(self):
 		"""Method for printing the bot to screen """
 		pygame.draw.circle(screen, (255,255,255), (int(self.x), int(self.y)), 10)
 		pass
@@ -118,17 +120,17 @@ class StandardBot(Bot):
 		x1, y1, x2, y2 = 0, 0, plx, ply
 		if(plx > win_width/2): #bottom screen
 			if (ply > win_height/2):
-				print "Quarter 3 == player in bottom right corner"
+				#print "Quarter 3 == player in bottom right corner"
 				x1,y1,x2,y2 = 0,0, plx-20,ply-20
 			else:
-				print "Quarter 2 == player in bottom left corner"
+				#print "Quarter 2 == player in bottom left corner"
 				x1,y1,x2,y2 = 0, ply+20,plx-20, win_height
 		else: #top screen
 			if (ply > win_height/2):
-				print "Quarter 4 == player in top right corner"
+				#print "Quarter 4 == player in top right corner"
 				x1,y1,x2,y2 = plx+20, 0, win_width,ply-20
 			else:
-				print "Quarter 1 == player in top left corner"
+				#print "Quarter 1 == player in top left corner"
 				x1,y1,x2,y2 = plx+20, ply+20, win_width, win_height	
 		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2))
 		print self.x, self.y
@@ -161,7 +163,7 @@ class RocketShot(Shot):
 	def __init__(self, x=0, y=0, angle=0, damage=150, width=5, height=3, mode="cl", speed=50):
 		Shot.__init__(self, x, y, angle, damage, width, height, mode, speed) # calls __init__ from parent
 
-	def update(self, dt = 1): # override parent's update
+	def update(self):
 		self.x += self.vx*dt*(self.speed/100) # use speed of bot in calculation
 		self.y += self.vy*dt*(self.speed/100)
 		self.speed += 2 # increase shot speed -- higher increase might be better
@@ -178,7 +180,7 @@ def update():
 		i.update(dt)
 
 	#Update every bot
-	for i in shots:
+	for i in players[0].shots:
 		i.update(dt)
 
 	#Event handling	
@@ -186,16 +188,23 @@ def update():
 		if event.type == QUIT:
 			pygame.quit()
 			sys.exit()
-		if event.type == pygame.KEYDOWN:
-			pass
 		if event.type == pygame.MOUSEBUTTONDOWN:
-			if event.button == 1 and last_shot > 10:
-				shots.append(Shot(players[0].x, players[0].y, players[0].ch_angle))
-				last_shot = 0
-		# else: ## this doesn't make any sense
-		last_shot += dt
+			if event.button == 1:
+				print "Bouton down"
+				players[0].isshooting = True
+		if event.type == pygame.MOUSEBUTTONUP:
+			if event.button == 1:
+				print "Bouton up"
+				players[0].isshooting = False
 		if event.type == pygame.MOUSEMOTION:
 			mouse_x, mouse_y = event.pos
+	print last_shot
+	# Modified to permit continuous shooting without releasing mouse key
+	if players[0].isshooting and last_shot > 500:
+		players[0].shots.append(Shot(players[0].x, players[0].y, players[0].ch_angle))
+		last_shot = 0
+	# else: ## this doesn't make any sense
+	last_shot += dt
 	#Get direction keys and move accordingly	
 	players[0].update()
 
@@ -203,16 +212,15 @@ def draw():
 	text = font.render("Deb:",True,(255,255,255))
 	screen.blit(background, (0, 0)) #Blit background to real screen
 	screen.blit(text, (0,0)) #Blit Text to real screen
-	for i in bots: #Draw every bot to scree
+	for i in bots: #Draw every bot to screen
 		i.draw()
-	for i in shots: #Draw every shot to scree
+	for i in players[0].shots: #Draw every player shot to screen
 		i.draw()
-	pygame.draw.line(screen, (255,255,255), (players[0].ch_x1, players[0].ch_y1), (players[0].ch_x2, players[0].ch_y2))
-	#screen.blit(players[0].image, (int(players[0].x) - players[0].width/2,int(players[0].y) - players[0].height/2))
-	#screen.blit(pygame.transform.rotate(players[0].image, -math.degrees(players[0].ch_angle)),(int(players[0].x) - players[0].width/2,int(players[0].y) - players[0].height/2))
-	
+	players[0].draw()
+	pygame.draw.line(screen, (255,255,255), (players[0].ch_x1, players[0].ch_y1), (players[0].ch_x2, players[0].ch_y2))	
 	pygame.display.flip()
 
+# Main loop
 while True:
 	dt = clock.get_time() #Time since last frame
 	update() #Update coords
