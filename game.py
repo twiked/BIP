@@ -50,21 +50,31 @@ class Player:
 		self.health = 100
 		self.shots = []
 		self.isshooting = False
+		self.last_shot = 0
+		
 	def update(self):
+		global dt
 		keys = pygame.key.get_pressed()
 		if keys[pygame.K_RIGHT]: players[0].x += 1
 		if keys[pygame.K_LEFT]: players[0].x -= 1
 		if keys[pygame.K_DOWN]: players[0].y += 1
 		if keys[pygame.K_UP]: players[0].y -= 1
-		#self.x += self.vx
-		#self.y += self.vy
 		self.ch_angle = -math.atan2((mouse_x-self.x),(mouse_y-self.y)) + math.pi/2
 		self.ch_x1=math.cos(self.ch_angle)*ch_iradius+self.x
 		self.ch_y1=math.sin(self.ch_angle)*ch_iradius+self.y
 		self.ch_x2=math.cos(self.ch_angle)*ch_oradius+self.x
 		self.ch_y2=math.sin(self.ch_angle)*ch_oradius+self.y
+		
+		if self.isshooting and self.last_shot > 500:
+			self.shots.append(Shot(self.x, self.y, self.ch_angle))
+			self.last_shot = 0
+		self.last_shot += dt
+		for i in self.shots:
+			i.update(dt)
+
 	def hit(self, hitter):
 		self.health = self.health - hitter.damage
+			
 	def draw(self):
 		screen.blit(pygame.transform.smoothscale(rot_center(self.image, -math.degrees(self.ch_angle)),(32,32)), (self.x-16, self.y-16))
 		
@@ -93,8 +103,10 @@ class Bot:
 		self.vx = 0
 		self.vy = 0
 		self.speed = 0.1
+		
 	def hit(self, hitter):
 		self.health = self.health - hitter.damage
+		
 	def update(self, dt):
 		old_x=self.x
 		old_y=self.y
@@ -103,6 +115,7 @@ class Bot:
 		self.vy = math.sin(self.angle)
 		self.x = self.x + self.vx * self.speed
 		self.y = self.y + self.vy * self.speed
+		
 	def draw(self):
 		"""Method for printing the bot to screen """
 		pygame.draw.circle(screen, (255,255,255), (int(self.x), int(self.y)), 10)
@@ -152,9 +165,11 @@ class Shot:
 		self.vx = math.cos(angle)
 		self.vy = math.sin(angle)
 	def update(self, dt = 1):
+		
 		self.x += self.vx*dt*(self.speed/100) # use speed of bot in calculation
 		self.y += self.vy*dt*(self.speed/100)
 	def draw(self):
+		
 		pygame.draw.circle(screen, (255,0,0), (int(self.x), int(self.y)), 10)
 
 class RocketShot(Shot): 
@@ -170,6 +185,8 @@ class RocketShot(Shot):
 
 def update():
 	global bot_ctr, dt, last_shot, mouse_x, mouse_y
+
+	#Spawn bots
 	bot_ctr += dt
 	if (bot_ctr >= 3000):
 		bot_ctr = 0
@@ -177,10 +194,6 @@ def update():
 		
 	#Update every bot
 	for i in bots:
-		i.update(dt)
-
-	#Update every bot
-	for i in players[0].shots:
 		i.update(dt)
 
 	#Event handling	
@@ -198,15 +211,9 @@ def update():
 				players[0].isshooting = False
 		if event.type == pygame.MOUSEMOTION:
 			mouse_x, mouse_y = event.pos
-	print last_shot
-	# Modified to permit continuous shooting without releasing mouse key
-	if players[0].isshooting and last_shot > 500:
-		players[0].shots.append(Shot(players[0].x, players[0].y, players[0].ch_angle))
-		last_shot = 0
-	# else: ## this doesn't make any sense
-	last_shot += dt
-	#Get direction keys and move accordingly	
-	players[0].update()
+
+	for i in players:
+		i.update()
 
 def draw():
 	text = font.render("Deb:",True,(255,255,255))
