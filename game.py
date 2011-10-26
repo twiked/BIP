@@ -35,6 +35,13 @@ def rot_center(image, angle):
     rot_image = rot_image.subsurface(rot_rect).copy()
     return rot_image
 
+def check_collision(a, b):
+	"""Check collisions between 2 objects. Object must have x,y,width and height attributes"""
+	if (a.x + a.width > b.x) and (a.x < b.x + b.width) and (a.y + a.height > b.y) and (a.y < b.y + b.height):
+		return True
+	else:
+		return False
+
 class Player:
 	def __init__(self):
 		self.x = win_width/2
@@ -70,9 +77,15 @@ class Player:
 			self.shots.append(Shot(self.x, self.y, self.ch_angle))
 			self.last_shot = 0
 		self.last_shot += dt
+		
 		for i in self.shots:
-			i.check_collision()
-			i.update(dt)
+			i.update()
+		for i in self.shots[:]:
+			if i.health <= 0:
+				self.shots.remove(i)
+			else:
+				if i.x < 0 or i.x > win_width or i.y < 0 or i.y > win_height:
+					self.shots.remove(i)
 
 	def hit(self, hitter):
 		self.health -= hitter.damage
@@ -82,14 +95,6 @@ class Player:
 		
 #Add one player
 players.append(Player())
-
-def check_collision(a, b):
-	"""Check collisions between 2 objects. Object must have x,y,width and height attributes"""
-	if (a.x + a.width > b.x) and (a.x < b.x + b.width) and (a.y + a.height > b.y) and (a.y < b.y + b.height):
-		return True
-	else:
-		return False
-
 
 class Bot:
 	"""Generic bot class"""
@@ -118,6 +123,7 @@ class Bot:
 		self.vy = math.sin(self.angle)
 		self.x = self.x + self.vx * self.speed
 		self.y = self.y + self.vy * self.speed
+		self.check_collision()
 		
 	def draw(self):
 		"""Method for printing the bot to screen """
@@ -155,7 +161,6 @@ class StandardBot(Bot):
 				#print "Quarter 1 == player in top left corner"
 				x1,y1,x2,y2 = plx+20, ply+20, win_width, win_height	
 		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2))
-		print self.x, self.y
 
 class Shot:
 	"""Generic shot class"""
@@ -178,15 +183,17 @@ class Shot:
 	def update(self, dt = 1):
 		self.x += self.vx*dt*(self.speed/100) # use speed of bot in calculation
 		self.y += self.vy*dt*(self.speed/100)
+		self.check_collision()
 		
 	def hit(self, hitter):
 		self.health -= hitter.damage
+		print self.health
 	
 	def draw(self):
 		pygame.draw.circle(screen, (255,0,0), (int(self.x), int(self.y)), 10)
 		
 	def check_collision(self):
-		for i in bots[:]:
+		for i in bots:
 			if check_collision(self, i):
 				i.hit(self)
 				self.hit(i)
@@ -214,8 +221,7 @@ def update():
 	#Update every bot
 	for i in bots[:]:
 		i.update(dt)
-		if i.check_collision():
-			print "Collision"
+		if i.health <= 0:
 			bots.remove(i)
 
 	#Event handling	
@@ -225,11 +231,9 @@ def update():
 			sys.exit()
 		if event.type == pygame.MOUSEBUTTONDOWN:
 			if event.button == 1:
-				print "Bouton down"
 				players[0].isshooting = True
 		if event.type == pygame.MOUSEBUTTONUP:
 			if event.button == 1:
-				print "Bouton up"
 				players[0].isshooting = False
 		if event.type == pygame.MOUSEMOTION:
 			mouse_x, mouse_y = event.pos
