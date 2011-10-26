@@ -191,7 +191,7 @@ class StandardBot(Bot):
 
 class Shot:
 	"""Generic shot class"""
-	def __init__(self, x=0, y=0, angle=0, damage=100, width=5, height=3, mode="cl", speed=2000):
+	def __init__(self, x=0, y=0, angle=0, damage=100, width=20, height=20, mode="cl", speed=2000):
 		self.x = x
 		self.y = y
 		self.angle = angle
@@ -257,17 +257,20 @@ def update():
 			mouse_x, mouse_y = event.pos
 		if event.type == pygame.JOYAXISMOTION:
 			if event.axis == 3: # x movement
-				players[1].x += event.value
+				players[event.joy].x += event.value
 			if event.axis == 4: # y movement
-				players[1].y += event.value
+				players[event.joy].y += event.value
 			if event.axis == 1 or event.axis == 2: # Look away
-				players[1].ch_angle = math.arccos(joys[0].getaxis(1)) + math.arcsin(joys[0].getaxis(2))
+				players[event.joy].ch_angle = math.arccos(joys[0].getaxis(1)) + math.arcsin(joys[0].getaxis(2))
 		elif event.type == pygame.MOUSEBUTTONDOWN:
 			if event.button == 1:
 				players[0].isshooting = True
 		elif event.type == pygame.MOUSEBUTTONUP:
 			if event.button == 1:
 				players[0].isshooting = False
+		elif event.type == pygame.JOYBUTTONDOWN:
+			if event.button == 1:
+				players[event.joy].isshooting = True
 		elif event.type == QUIT:
 			pygame.quit()
 			sys.exit()
