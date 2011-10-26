@@ -4,6 +4,10 @@ import pygame, math, random, sys
 from pygame.locals import *
 
 pygame.init()
+pygame.joystick.init()
+joys = []
+for i in range(pygame.joystick.get_count()):
+	joys.append(pygame.joystick.Joystick)
 clock = pygame.time.Clock()
 # Font object to write text with it
 font = pygame.font.Font(None, 25)
@@ -52,7 +56,7 @@ class Player:
 		self.height = 20
 		self.firemode = 0
 		self.ch_angle = 0
-		self.speed = 300
+		self.speed = 2
 		self.image = pygame.image.load("ship.png").convert_alpha()
 		self.health = 100
 		self.damage = 9000
@@ -60,13 +64,32 @@ class Player:
 		self.isshooting = False
 		self.last_shot = 0
 		
+	def move(self):
+		keys = pygame.key.get_pressed()
+		if keys[pygame.K_RIGHT]:
+			old_x = self.x
+			players[0].x += self.speed
+			if self.x > win_width:
+				self.x = old_x
+		if keys[pygame.K_LEFT]:
+			old_x = self.x
+			players[0].x -= self.speed
+			if self.x < 0:
+				self.x = old_x
+		if keys[pygame.K_DOWN]:
+			old_y = self.y
+			players[0].y += self.speed
+			if self.y > win_height:
+				self.y = old_y
+		if keys[pygame.K_UP]:
+			old_y = self.y
+			players[0].y -= self.speed
+			if self.y < 0:
+				self.y = old_y
+
 	def update(self):
 		global dt
-		keys = pygame.key.get_pressed()
-		if keys[pygame.K_RIGHT]: players[0].x += 1
-		if keys[pygame.K_LEFT]: players[0].x -= 1
-		if keys[pygame.K_DOWN]: players[0].y += 1
-		if keys[pygame.K_UP]: players[0].y -= 1
+		self.move()
 		self.ch_angle = -math.atan2((mouse_x-self.x),(mouse_y-self.y)) + math.pi/2
 		self.ch_x1=math.cos(self.ch_angle)*ch_iradius+self.x
 		self.ch_y1=math.sin(self.ch_angle)*ch_iradius+self.y
@@ -92,7 +115,17 @@ class Player:
 			
 	def draw(self):
 		screen.blit(pygame.transform.smoothscale(rot_center(self.image, -math.degrees(self.ch_angle)),(32,32)), (self.x-16, self.y-16))
-		
+
+class PlayerJoy(Player):
+	def move(self):
+		old_x, old_y = self.x, self.y
+		x += joys[1].get_axis(1)*self.speed
+		y += joys[2].get_axis(1)*self.speed
+		if not 0 < self.x < win_width:
+			self.x = old_x
+		if not 0 < self.y < win_height:
+			self.y = old_y
+
 #Add one player
 players.append(Player())
 
@@ -109,7 +142,7 @@ class Bot:
 		self.angle = 0
 		self.vx = 0
 		self.vy = 0
-		self.speed = 0.1
+		self.speed = 2
 		self.damage = 9000
 		
 	def hit(self, hitter):
@@ -135,12 +168,6 @@ class Bot:
 			if check_collision(self, j):
 				j.hit(self)
 				self.hit(j)
-	
-"""
-class BotSubClassType(Bot):
-	# Bot with random spawn between the most far angle of the screen and player position. Random speed
-	def __init__(self, plx, ply):	
-		Class.__init__(self, plx, ply)"""
 
 class StandardBot(Bot):
 	"""Bot with random spawn between the most far angle of the screen and player position. Random speed"""
@@ -164,7 +191,7 @@ class StandardBot(Bot):
 
 class Shot:
 	"""Generic shot class"""
-	def __init__(self, x=0, y=0, angle=0, damage=100, width=5, height=3, mode="cl", speed=100):
+	def __init__(self, x=0, y=0, angle=0, damage=100, width=5, height=3, mode="cl", speed=2000):
 		self.x = x
 		self.y = y
 		self.angle = angle
@@ -237,12 +264,12 @@ def update():
 				players[0].isshooting = False
 		if event.type == pygame.MOUSEMOTION:
 			mouse_x, mouse_y = event.pos
-
+	#Must be after event handling to listen to mouse input (shooting)
 	for i in players:
 		i.update()
 
 def draw():
-	text = font.render("Deb:",True,(255,255,255))
+	text = font.render("FPS:" + str(clock.get_fps()),True,(255,255,255))
 	screen.blit(background, (0, 0)) #Blit background to real screen
 	screen.blit(text, (0,0)) #Blit Text to real screen
 	for i in bots: #Draw every bot to screen
@@ -259,5 +286,4 @@ while True:
 	update() #Update coords
 	draw()
 	pygame.display.update() #Send the frame to GPU
-	#Advance the time precisely
-	clock.tick_busy_loop()
+	clock.tick_busy_loop(60) #Advance the time precisely
