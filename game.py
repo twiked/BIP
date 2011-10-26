@@ -13,7 +13,6 @@ clock = pygame.time.Clock()
 font = pygame.font.Font(None, 25)
 players = []
 bots = []
-shots = []
 
 bot_ctr = 0
 last_shot = 0
@@ -26,8 +25,7 @@ win_width = 640
 win_height = 480
 screen = pygame.display.set_mode((win_width, win_height))
 pygame.display.set_caption('Biggest Idiotic Program')
-background = pygame.Surface(screen.get_size())
-background = background.convert()
+background = pygame.Surface(screen.get_size()).convert()
 background.fill((0, 0, 0))
 
 def rot_center(image, angle):
@@ -63,6 +61,7 @@ class Player:
 		self.shots = []
 		self.isshooting = False
 		self.last_shot = 0
+		self.score = 0
 		
 	def move(self):
 		self.vx, self.vy = 0, 0
@@ -97,8 +96,16 @@ class Player:
 			self.last_shot = 0
 		self.last_shot += dt
 		
+		#Move and check collision, add score according to dmg and reward
 		for i in self.shots:
 			i.update()
+			for j in bots:
+				if check_collision(i, j):
+					j.hit(i)
+					i.hit(j)
+					self.score += (i.damage / j.max_health) * j.reward
+					print self.score
+		#Check for out of zone ordestroyed shots, and delete them
 		for i in self.shots[:]:
 			if i.health <= 0:
 				self.shots.remove(i)
@@ -117,12 +124,12 @@ class Player:
 class PlayerJoy(Player):
 	def move(self):
 		old_x, old_y = self.x, self.y
-		self.x += joys[1].get_axis(1)*self.speed
-		self.y += joys[1].get_axis(2)*self.speed
-		if not 0 < self.x < win_width:
-			self.x = old_x
-		if not 0 < self.y < win_height:
-			self.y = old_y
+		self.vx = joys[1].get_axis(1)*self.speed
+		self.vy = joys[1].get_axis(2)*self.speed
+		if 0 < self.x + self.vx < win_width:
+			self.x += self.vx
+		if 0 < self.y < win_height:
+			self.y += self.vy
 
 #Add players
 players.append(Player())
@@ -131,19 +138,19 @@ if pygame.joystick.get_count():
 
 class Bot:
 	"""Generic bot class"""
-	def __init__(self, x=0, y=0):
+	def __init__(self, x=0, y=0, width=20, height=20, reward=100, damage=9000, speed=2, max_health=100 ):
 		self.x = x
 		self.y = y
-		self.max_health = 100
+		self.max_health = max_health
 		self.health = self.max_health
 		self.width = 20
 		self.height = 20
-		self.reward = 100
+		self.reward = reward
 		self.angle = 0
 		self.vx = 0
 		self.vy = 0
 		self.speed = 2
-		self.damage = 9000
+		self.damage = damage
 		
 	def hit(self, hitter):
 		self.health = self.health - hitter.damage
@@ -210,20 +217,12 @@ class Shot:
 	def update(self, dt = 1):
 		self.x += self.vx*dt*(self.speed/100) # use speed of bot in calculation
 		self.y += self.vy*dt*(self.speed/100)
-		self.check_collision()
 		
 	def hit(self, hitter):
 		self.health -= hitter.damage
-		print self.health
 	
 	def draw(self):
 		pygame.draw.circle(screen, (255,0,0), (int(self.x), int(self.y)), 10)
-		
-	def check_collision(self):
-		for i in bots:
-			if check_collision(self, i):
-				i.hit(self)
-				self.hit(i)
 
 class RocketShot(Shot): 
 	"""Small rocket propelled bullet that goes faster with time. Higher damage - lower initial speed -- might as well change 'mode' """
