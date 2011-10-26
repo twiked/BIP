@@ -56,7 +56,7 @@ class Player:
 		self.height = 20
 		self.firemode = 0
 		self.ch_angle = 0
-		self.speed = 2
+		self.speed = 4
 		self.image = pygame.image.load("ship.png").convert_alpha()
 		self.health = 100
 		self.damage = 9000
@@ -65,31 +65,27 @@ class Player:
 		self.last_shot = 0
 		
 	def move(self):
+		self.vx, self.vy = 0, 0
 		keys = pygame.key.get_pressed()
 		if keys[pygame.K_RIGHT]:
-			old_x = self.x
-			players[0].x += self.speed
-			if self.x > win_width:
-				self.x = old_x
+			players[0].vx += 1
 		if keys[pygame.K_LEFT]:
-			old_x = self.x
-			players[0].x -= self.speed
-			if self.x < 0:
-				self.x = old_x
+			players[0].vx -= 1
 		if keys[pygame.K_DOWN]:
-			old_y = self.y
-			players[0].y += self.speed
-			if self.y > win_height:
-				self.y = old_y
+			players[0].vy += 1
 		if keys[pygame.K_UP]:
-			old_y = self.y
-			players[0].y -= self.speed
-			if self.y < 0:
-				self.y = old_y
+			players[0].vy -= 1
+		if abs(self.vx)+abs(self.vy) > 1:
+			self.vx, self.vy = self.vx*self.speed/math.sqrt(2), self.vy*self.speed/math.sqrt(2)
+		else:
+			self.vx, self.vy = self.vx*self.speed, self.vy*self.speed
+		if 0 < self.x + self.vx < win_width:
+			self.x += self.vx
+		if 0 < self.y + self.vy < win_height:
+			self.y += self.vy
 
 	def update(self):
 		global dt
-		self.move()
 		self.ch_angle = -math.atan2((mouse_x-self.x),(mouse_y-self.y)) + math.pi/2
 		self.ch_x1=math.cos(self.ch_angle)*ch_iradius+self.x
 		self.ch_y1=math.sin(self.ch_angle)*ch_iradius+self.y
@@ -115,19 +111,23 @@ class Player:
 			
 	def draw(self):
 		screen.blit(pygame.transform.smoothscale(rot_center(self.image, -math.degrees(self.ch_angle)),(32,32)), (self.x-16, self.y-16))
+		for i in self.shots: #Draw every player shot to screen
+			i.draw()
 
 class PlayerJoy(Player):
 	def move(self):
 		old_x, old_y = self.x, self.y
-		x += joys[1].get_axis(1)*self.speed
-		y += joys[2].get_axis(1)*self.speed
+		self.x += joys[1].get_axis(1)*self.speed
+		self.y += joys[1].get_axis(2)*self.speed
 		if not 0 < self.x < win_width:
 			self.x = old_x
 		if not 0 < self.y < win_height:
 			self.y = old_y
 
-#Add one player
+#Add players
 players.append(Player())
+if pygame.joystick.get_count():
+	players.append(PlayerJoy())
 
 class Bot:
 	"""Generic bot class"""
@@ -172,21 +172,21 @@ class Bot:
 class StandardBot(Bot):
 	"""Bot with random spawn between the most far angle of the screen and player position. Random speed"""
 	def __init__(self, plx, ply):
-		x1, y1, x2, y2 = 0, 0, plx, ply
+		x1, y1, x2, y2 = 0, 0, int(plx), int(ply)
 		if(plx > win_width/2): #bottom screen
 			if (ply > win_height/2):
 				#print "Quarter 3 == player in bottom right corner"
-				x1,y1,x2,y2 = 0,0, plx-20,ply-20
+				x1,y1,x2,y2 = 0,0, x2-20,y2-20
 			else:
 				#print "Quarter 2 == player in bottom left corner"
-				x1,y1,x2,y2 = 0, ply+20,plx-20, win_height
+				x1,y1,x2,y2 = 0, y2+20,x2-20, win_height
 		else: #top screen
 			if (ply > win_height/2):
 				#print "Quarter 4 == player in top right corner"
-				x1,y1,x2,y2 = plx+20, 0, win_width,ply-20
+				x1,y1,x2,y2 = x2+20, 0, win_width,y2-20
 			else:
 				#print "Quarter 1 == player in top left corner"
-				x1,y1,x2,y2 = plx+20, ply+20, win_width, win_height	
+				x1,y1,x2,y2 = x2+20, y2+20, win_width, win_height	
 		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2))
 
 class Shot:
@@ -253,28 +253,34 @@ def update():
 
 	#Event handling	
 	for event in pygame.event.get():
-		if event.type == QUIT:
-			pygame.quit()
-			sys.exit()
-		if event.type == pygame.MOUSEBUTTONDOWN:
-			if event.button == 1:
-				players[0].isshooting = True
-		if event.type == pygame.MOUSEBUTTONUP:
-			if event.button == 1:
-				players[0].isshooting = False
 		if event.type == pygame.MOUSEMOTION:
 			mouse_x, mouse_y = event.pos
+		if event.type == pygame.JOYAXISMOTION:
+			if event.axis == 3: # x movement
+				players[1].x += event.value
+			if event.axis == 4: # y movement
+				players[1].y += event.value
+			if event.axis == 1 or event.axis == 2: # Look away
+				players[1].ch_angle = math.arccos(joys[0].getaxis(1)) + math.arcsin(joys[0].getaxis(2))
+		elif event.type == pygame.MOUSEBUTTONDOWN:
+			if event.button == 1:
+				players[0].isshooting = True
+		elif event.type == pygame.MOUSEBUTTONUP:
+			if event.button == 1:
+				players[0].isshooting = False
+		elif event.type == QUIT:
+			pygame.quit()
+			sys.exit()
 	#Must be after event handling to listen to mouse input (shooting)
 	for i in players:
+		i.move()
 		i.update()
 
 def draw():
-	text = font.render("FPS:" + str(clock.get_fps()),True,(255,255,255))
+	text = font.render("FPS:" + str(int(clock.get_fps())),True,(255,255,255))
 	screen.blit(background, (0, 0)) #Blit background to real screen
 	screen.blit(text, (0,0)) #Blit Text to real screen
 	for i in bots: #Draw every bot to screen
-		i.draw()
-	for i in players[0].shots: #Draw every player shot to screen
 		i.draw()
 	players[0].draw()
 	pygame.draw.line(screen, (255,255,255), (players[0].ch_x1, players[0].ch_y1), (players[0].ch_x2, players[0].ch_y2))	
@@ -286,4 +292,4 @@ while True:
 	update() #Update coords
 	draw()
 	pygame.display.update() #Send the frame to GPU
-	clock.tick_busy_loop(60) #Advance the time precisely
+	clock.tick(60) #Advance the time precisely
