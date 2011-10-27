@@ -18,6 +18,8 @@ font = pygame.font.Font(None, 25)
 players = []
 bots = []
 
+
+player_count = 0
 bot_ctr = 0
 last_shot = 0
 mouse_x = 0
@@ -29,6 +31,37 @@ screen = pygame.display.set_mode((win_width, win_height))
 pygame.display.set_caption('Biggest Idiotic Program')
 background = pygame.Surface(screen.get_size()).convert()
 background.fill((0, 0, 0))
+
+def init_players():
+	"""Ask user how many bros will play the game"""
+	while not 1 <= player_count <= 4:
+		screen.blit(background, (0,0))
+		screen.blit(font.render("How many players ?",True,(255,255,255)), (0,0))
+		e = pygame.wait(pygame.KEYDOWN)
+		if e.key == pygame.K_1 or e == pygame.K_KP1:
+			player_count = 1
+		if e.key == pygame.K_2 or e == pygame.K_KP2:
+			player_count = 2
+		if e.key == pygame.K_3 or e == pygame.K_KP3:
+			player_count = 3
+		if e.key == pygame.K_4 or e == pygame.K_KP4:
+			player_count = 4
+
+	pygame.event.clear(pygame.KEYDOWN)
+	for i in range(player_count):
+		if pygame.wait(pygame.KEYDOWN).key == k:
+			players.append(Player("key")
+		if pygame.wait(pygame.KEYDOWN).key == j
+			e = pygame.wait(pygame.KEYDOWN)
+			if e.key == pygame.K_1 or e == pygame.K_KP1:
+				players.append(Player("joy1")
+			if e.key == pygame.K_2 or e == pygame.K_KP2:
+				players.append(Player("joy2")
+			if e.key == pygame.K_3 or e == pygame.K_KP3:
+				players.append(Player("joy3")
+			if e.key == pygame.K_4 or e == pygame.K_KP4:
+				players.append(Player("joy4")
+		
 
 def rot_center(image, angle):
     """Rotate an image while keeping its center and size"""
