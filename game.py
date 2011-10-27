@@ -103,7 +103,7 @@ class Player:
 				if check_collision(i, j):
 					j.hit(i)
 					i.hit(j)
-					self.score += (i.damage / j.max_health) * j.reward
+					# self.score += (i.damage / j.max_health) * j.reward
 					print self.score
 		#Check for out of zone ordestroyed shots, and delete them
 		for i in self.shots[:]:
@@ -138,7 +138,7 @@ if pygame.joystick.get_count():
 
 class Bot:
 	"""Generic bot class"""
-	def __init__(self, x=0, y=0, width=20, height=20, reward=100, damage=9000, speed=2, max_health=100 ):
+	def __init__(self, x=0, y=0, width=20, height=20, reward=100, damage=9000, speed=2., max_health=100 ):
 		self.x = x
 		self.y = y
 		self.max_health = max_health
@@ -149,7 +149,7 @@ class Bot:
 		self.angle = 0
 		self.vx = 0
 		self.vy = 0
-		self.speed = 2
+		self.speed = speed
 		self.damage = damage
 		
 	def hit(self, hitter):
@@ -198,7 +198,7 @@ class StandardBot(Bot):
 
 class Shot:
 	"""Generic shot class"""
-	def __init__(self, x=0, y=0, angle=0, damage=100, width=20, height=20, mode="cl", speed=2000):
+	def __init__(self, x=0, y=0, angle=0, damage=100, width=20, height=20, mode="cl", speed=2000.):
 		self.x = x
 		self.y = y
 		self.angle = angle
@@ -227,14 +227,16 @@ class Shot:
 class RocketShot(Shot): 
 	"""Small rocket propelled bullet that goes faster with time. Higher damage - lower initial speed -- might as well change 'mode' """
 	
-	def __init__(self, x=0, y=0, angle=0, damage=150, width=5, height=3, mode="cl", speed=50):
+	def __init__(self, x=0, y=0, angle=0, damage=150, width=5, height=3, mode="rk", speed=50.):
 		Shot.__init__(self, x, y, angle, damage, width, height, mode, speed) # calls __init__ from parent
+		self.health = 1 # low health so it can't go through
 
 	def update(self):
 		self.x += self.vx*dt*(self.speed/100) # use speed of bot in calculation
 		self.y += self.vy*dt*(self.speed/100)
-		self.speed += 2 # increase shot speed -- higher increase might be better
-
+		self.speed = min(self.speed+2, 2500) # increase shot speed / get a maximum speed for the rocket
+	# should the rocket folow a bot (check for everyshot which one to target) folow the mouse (can lead to weird behaviors) or just go straight
+	# might as well add the explosion (hit multiple bots in an area)
 def update():
 	global bot_ctr, dt, last_shot, mouse_x, mouse_y
 
@@ -248,7 +250,9 @@ def update():
 	for i in bots[:]:
 		i.update(dt)
 		if i.health <= 0:
+			players[0].score += bots[i].reward # increase score when bot dies
 			bots.remove(i)
+			
 
 	#Event handling	
 	for event in pygame.event.get():
