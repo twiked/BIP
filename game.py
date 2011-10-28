@@ -25,8 +25,8 @@ last_shot = 0
 mouse_x = 0
 mouse_y = 0
 dt = clock.get_time()
-win_width = 640
-win_height = 480
+win_width = 1024
+win_height = 590
 screen = pygame.display.set_mode((win_width, win_height))
 pygame.display.set_caption('Biggest Idiotic Program')
 background = pygame.Surface(screen.get_size()).convert()
@@ -129,6 +129,7 @@ class Player:
 			self.last_shot = 0
 		self.last_shot += dt
 	def input(self):
+		"""Input is managed in the global update loop"""
 		pass
 	def update(self):
 		global dt
@@ -168,6 +169,8 @@ class PlayerJoy(Player):
 		Player.__init__(self)
 		self.joy = joy
 	def input(self):
+		"""Take relevant elements from the event queue to control the player, 
+		update vectors and angles accordingly. Put back others events to the event queue"""
 		xc_c, yc_c, x_count, y_count = 0,0,0,0
 		for e in pygame.event.get(pygame.JOYAXISMOTION):
 			if e.joy == self.joy:
@@ -323,13 +326,6 @@ def update():
 	for event in pygame.event.get():
 		if event.type == pygame.MOUSEMOTION:
 			mouse_x, mouse_y = event.pos
-		if event.type == pygame.JOYAXISMOTION:
-			if event.axis == 0: # x movement
-				players[event.joy+1].vx = event.value
-			if event.axis == 1: # y movement
-				players[event.joy+1].vy = event.value
-			if (event.axis == 2 or event.axis == 3): # Look away
-				players[event.joy+1].ch_angle = math.atan2(joys[0].get_axis(3), joys[0].get_axis(2))
 		elif event.type == pygame.MOUSEBUTTONDOWN:
 			if event.button == 1:
 				players[0].isshooting = True
