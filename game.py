@@ -50,18 +50,20 @@ def init_players():
 	pygame.event.clear(pygame.KEYDOWN)
 	for i in range(player_count):
 		if pygame.wait(pygame.KEYDOWN).key == k:
-			players.append(Player("key")
-		if pygame.wait(pygame.KEYDOWN).key == j
+			players.append(Player("key")) 
+		elif pygame.wait(pygame.KEYDOWN).key == j:
 			e = pygame.wait(pygame.KEYDOWN)
-			if e.key == pygame.K_1 or e == pygame.K_KP1:
-				players.append(Player("joy1")
-			if e.key == pygame.K_2 or e == pygame.K_KP2:
-				players.append(Player("joy2")
-			if e.key == pygame.K_3 or e == pygame.K_KP3:
-				players.append(Player("joy3")
-			if e.key == pygame.K_4 or e == pygame.K_KP4:
-				players.append(Player("joy4")
-		
+			while (e.key not in (1,2,3,4)):
+				e = pygame.wait(pygame.KEYDOWN)
+				if e.key == pygame.K_1 or e == pygame.K_KP1:
+					players.append(Player(1))
+				if e.key == pygame.K_2 or e == pygame.K_KP2:
+					players.append(Player(2))
+				if e.key == pygame.K_3 or e == pygame.K_KP3:
+					players.append(Player(3))
+				if e.key == pygame.K_4 or e == pygame.K_KP4:
+					players.append(Player(4))
+
 
 def rot_center(image, angle):
     """Rotate an image while keeping its center and size"""
@@ -126,6 +128,8 @@ class Player:
 			self.shots.append(Shot(self.x, self.y, self.ch_angle))
 			self.last_shot = 0
 		self.last_shot += dt
+	def input(self):
+		pass
 	def update(self):
 		global dt
 		self.ch_x1=math.cos(self.ch_angle)*self.ch_iradius+self.x
@@ -160,6 +164,33 @@ class Player:
 			i.draw()
 
 class PlayerJoy(Player):
+	def __init__(self, joy):
+		Player.__init__(self)
+		self.joy = joy
+	def input(self):
+		xc_c, yc_c, x_count, y_count = 0,0,0,0
+		for e in pygame.event.get(pygame.JOYAXISMOTION):
+			if e.joy == self.joy:
+				if e.axis == 2: # Look away
+					xc_c += 1
+					x_c += e.value
+				elif e.axis == 3:
+					yc_c += 1
+					y_c += e.value
+				elif e.axis == 0: # x movement
+					x_count += 1
+					vx += e.value
+				elif e.axis == 1: # y movement
+					y_count += 1
+					vy = e.value
+			else: 
+				pygame.event.post(e)
+		if x_count:
+			self.vx = vx / x_count
+		if y_count:
+			self.vy = vy / y_count
+		if xc_c and yc_c:
+			self.ch_angle = math.atan2(y_c/yc_c, x_c/yc_c)
 	def move(self):
 		if 0 < self.x + self.vx * self.speed < win_width:
 			self.x += self.vx * self.speed
@@ -168,8 +199,7 @@ class PlayerJoy(Player):
 
 #Add players
 players.append(Player())
-if pygame.joystick.get_count():
-	players.append(PlayerJoy())
+players.append(PlayerJoy(1))
 
 class Bot:
 	"""Generic bot class"""
@@ -315,13 +345,14 @@ def update():
 			sys.exit()
 	#Must be after event handling to listen to mouse input (shooting)
 	for i in players:
+		i.input()
 		i.move()
 		i.update()
 
 def draw():
-	text = font.render("Joy_x:" + str(joys[0].get_axis(0)),True,(255,255,255))
+	#text = font.render("Joy_x:" + str(joys[0].get_axis(0)),True,(255,255,255))
 	screen.blit(background, (0, 0)) #Blit background to real screen
-	screen.blit(text, (0,0)) #Blit Text to real screen
+	#screen.blit(text, (0,0)) #Blit Text to real screen
 	for i in bots: #Draw every bot to screen
 		i.draw()
 	for i in players:	
