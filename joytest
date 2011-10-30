@@ -1,0 +1,12 @@
+import pygame, time
+from pygame.locals import *
+pygame.init()
+pygame.joystick.init()
+j = pygame.joystick.Joystick(0)
+j.init()
+while True:
+    time.sleep(1)
+    pygame.event.pump()
+    for i in range(j.get_numaxes()):
+                   print "Axe " + str(i) + " : " + str(j.get_axis(i))
+    print "---------------------------"
