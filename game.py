@@ -1,6 +1,6 @@
 #!/usr/bin/python2
 
-import pygame, math, random, sys
+import pygame, math, random, sys, os
 from pygame.locals import *
 
 pygame.init()
@@ -26,6 +26,7 @@ curs = (
 	"        ",
 	"        ",
 	"        ")
+
 datatuple, masktuple = pygame.cursors.compile(curs, black='X', white=' ', xor='o')
 pygame.mouse.set_cursor((8,8), (4,4), datatuple, masktuple)
 player_count = 0
@@ -34,12 +35,12 @@ last_shot = 0
 mouse_x = 0
 mouse_y = 0
 dt = clock.get_time()
-win_width = 1680
-win_height = 1050
+win_width = 1024
+win_height = 600
 #Fullscreen
-screen = pygame.display.set_mode((win_width, win_height), pygame.FULLSCREEN)
+#screen = pygame.display.set_mode((win_width, win_height), pygame.FULLSCREEN)
 #Windowed
-#screen = pygame.display.set_mode((win_width, win_height))
+screen = pygame.display.set_mode((win_width, win_height))
 pygame.display.set_caption('Biggest Idiotic Program')
 #Black background
 #background = pygame.Surface(screen.get_size()).convert()
@@ -50,81 +51,92 @@ particles = pygame.Surface((win_width, win_height)).convert_alpha()
 particles.fill((0,0,0,0))
 background.blit(pygame.transform.smoothscale(back_image, (win_width, win_height)), (0,0), pygame.Rect(0,0,win_width,win_height))
 
+def wait_key():
+	while True:
+		e = pygame.event.wait()
+		if e.type == pygame.KEYDOWN:
+			if e.key == pygame.K_ESCAPE:
+				pygame.quit()
+				sys.exit()
+			return e
+		elif e.type == pygame.QUIT:
+			pygame.quit()
+			sys.exit()
 
 def init_players():
-	player_count = 0
 	"""Ask user how many bros will play the game"""
-	while not 1 <= player_count <= 4:
+	player_count = 0
+	assigned_joys = {}
+	assigned_keys = False
+	screen.blit(background, (0,0))
+	while not (1 <= player_count <= 4):
 		screen.blit(background, (0,0))
 		screen.blit(font.render("How many players ?",True,(255,255,255)), (0,0))
-		e = 0
-		while True:
-			e = pygame.event.wait()
-			if e.type == pygame.KEYDOWN:
-				break
-			else:
-				continue
-		if e.key == pygame.K_1 or e == pygame.K_KP1:
+		pygame.display.update()
+		e = wait_key()
+		if e.key == pygame.K_1 or e.key == pygame.K_KP1:
 			player_count = 1
-		if e.key == pygame.K_2 or e == pygame.K_KP2:
+		if e.key == pygame.K_2 or e.key == pygame.K_KP2:
 			player_count = 2
-		if e.key == pygame.K_3 or e == pygame.K_KP3:
+		if e.key == pygame.K_3 or e.key == pygame.K_KP3:
 			player_count = 3
-		if e.key == pygame.K_4 or e == pygame.K_KP4:
+		if e.key == pygame.K_4 or e.key == pygame.K_KP4:
 			player_count = 4
-	
-	for i in range(len(player_count)):
-		while True:
-			screen.blit(background, (0,0))
-			screen.blit(font.render("Choose a ship for player {0}".i, True, (255,255,255)), (0,30))
-			while True:
-				e = pygame.event.wait(pygame.KEYDOWN)
-				if e.type == pygame.KEYDOWN:
-					break
-				else:
-					continue
-			try:
-				self.image = open("playerimg/{0}".pygame.key.name(e.key))
-			except:
-				screen.blit(font.render("Image not valid",True,(255,255,255)), (0,30))
-				continue
-			screen.blit(background, (0,0))
-			screen.blit(self.image, (0,win_width-self.image.get_width()))
-			screen.blit(font.render("Press the same key to confirm choice",True,(255,255,255)), (0,30))
-			while True:
-				k = pygame.event.wait(pygame.KEYDOWN)
-				if k.type == pygame.KEYDOWN:
-					break
-				else:
-					continue
-			if k.key == e.key:
-				break
-			else:
-				continue
-	assigned_joys = {}
-	assigned_keys = {}
-	pygame.event.clear(pygame.KEYDOWN)
 
 	for i in range(player_count):
-		if pygame.event.wait(pygame.KEYDOWN).key == pygame.K_k:
-			if True not in assigned_keys:
-				players.append(Player()) 
-		elif pygame.event.wait(pygame.KEYDOWN).key == pygame.K_j:
-			e = pygame.event.wait(pygame.KEYDOWN)
-			while True:
-				e = pygame.event.wait(pygame.KEYDOWN)
-				if e.key == pygame.K_1 or e == pygame.K_KP1:
-					players.append(PlayerJoy(1))
+		screen.blit(background, (0,0))
+		screen.blit(font.render("What kind of controller for player {0}?".format(i), True, (255,255,255)),(0,0))
+		pygame.display.update()
+		while True:
+			e = wait_key()
+			if e.key == pygame.K_k:
+				if (not assigned_keys):
+					players.append(Player())
 					break
-				if (e.key == pygame.K_2 or e == pygame.K_KP2) and player_count >= 2:
-					players.append(PlayerJoy(2))
-					break
-				if (e.key == pygame.K_3 or e == pygame.K_KP3) and player_count >= 3:
-					players.append(PlayerJoy(3))
-					break
-				if (e.key == pygame.K_4 or e == pygame.K_KP4) and player_count == 4:
-					players.append(PlayerJoy(4))
-					break
+			elif e.key == pygame.K_j:
+				screen.blit(background, (0,0))
+				screen.blit(font.render("Which joystick ?", True, (255,255,255)),(0,30))
+				pygame.display.update()
+				while True:
+					k = wait_key()
+					if k.key == pygame.K_1 or k.key == pygame.K_KP1 and len(joys>=1):
+						players.append(PlayerJoy(joys[0]))
+						break
+					if (k.key == pygame.K_2 or k.key == pygame.K_KP2) and player_count >= 2 and len(joys>=2):
+						players.append(PlayerJoy(joys[1]))
+						break
+					if (k.key == pygame.K_3 or k.key == pygame.K_KP3) and player_count >= 3 and len(joys>=3):
+						players.append(PlayerJoy(joys[2]))
+						break
+					if (k.key == pygame.K_4 or k.key == pygame.K_KP4) and player_count == 4 and len(joys>=4):
+						players.append(PlayerJoy(joys[3]))
+						break
+				break
+		screen.blit(background, (0,0))
+		screen.blit(font.render("Choose a ship for player {0}".format(i), True, (255,255,255)), (0,0))
+		while True:
+			pygame.display.update()
+			e = wait_key()
+			if (not os.path.isfile("/home/twix/BIP/playerimg/" + str(pygame.key.name(e.key)) + ".png")):
+				screen.blit(background, (0,0))
+				screen.blit(font.render("Image not valid",True,(255,255,255)), (0,30))
+				pygame.display.update()
+				continue
+			screen.blit(background, (0,0))
+			screen.blit(players[i].image, (0,win_width-players[i].image.get_width()))
+			screen.blit(font.render("Press the same key to confirm choice",True,(255,255,255)), (0,30))
+			pygame.display.update()
+			k = wait_key()
+			if k.key == e.key:
+				
+				break
+			else:
+				screen.blit(background, (0,0))
+				screen.blit(font.render("Choose a ship for player {0}".format(i), True, (255,255,255)), (0,0))
+				continue
+
+	pygame.event.clear(pygame.KEYDOWN)
+
 def rot_center(image, angle):
 	"""Rotate an image while keeping its center and size"""
 	orig_rect = image.get_rect()
@@ -142,9 +154,9 @@ def check_collision(a, b):
 		return False
 
 class Player:
-	def __init__(self):
-		self.x = win_width/2
-		self.y = win_height/2
+	def __init__(self, x=win_width/2, y=win_height/2):
+		self.x = x
+		self.y = y
 		self.vx = 0
 		self.vy = 0
 		self.width = 20
@@ -438,7 +450,7 @@ def draw():
 	for i in players:	
 		i.draw()
 	pygame.display.flip()
-#init_players()
+init_players()
 
 # Main loop
 while True:
