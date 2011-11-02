@@ -152,6 +152,20 @@ def check_collision(a, b):
 		return True
 	else:
 		return False
+		
+def pick_best_player_target(x, y): 
+	""" Choose the closest player from pos(x, y) """
+	mindist = 100000
+	target = 0
+	for i in players:
+		angle = -math.atan2((i.x-x),(i.y)-y) + math.pi/2
+		vx = math.cos(angle)
+		vy = math.sin(angle)
+		curdist = math.sqrt(vx**2 + vy**2)
+		if mindist > curdist:
+			mindist = curdist
+			target = i
+	return target
 
 class Player:
 	def __init__(self, x=win_width/2, y=win_height/2):
@@ -306,6 +320,7 @@ class Bot:
 		self.vy = 0
 		self.speed = speed
 		self.damage = damage
+		self.target = pick_best_player_target(self.x, self.y)
 		
 		if img == 0:
 			self.image = pygame.Surface((20, 20))
@@ -321,7 +336,7 @@ class Bot:
 		self.health = self.health - hitter.damage
 		
 	def update(self, dt):
-		self.angle = -math.atan2((players[0].x-self.x),(players[0].y)-self.y) + math.pi/2
+		self.angle = -math.atan2((self.target.x-self.x),(self.target.y)-self.y) + math.pi/2
 		self.vx = math.cos(self.angle)
 		self.vy = math.sin(self.angle)
 		self.x = self.x + self.vx * self.speed
@@ -358,6 +373,37 @@ class StandardBot(Bot):
 				#print "Quarter 1 == player in top left corner"
 				x1,y1,x2,y2 = x2+20, y2+20, win_width, win_height	
 		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2), img=pygame.image.load("british-flag.gif").convert_alpha())
+
+class ImprovedBot(Bot):
+	"""smarter StandardBot, will change target if another player is closer, faster"""
+	def __init__(self, plx, ply):
+		x1, y1, x2, y2 = 0, 0, int(plx), int(ply)
+		if(plx > win_width/2): #bottom screen
+			if (ply > win_height/2):
+				#print "Quarter 3 == player in bottom right corner"
+				x1,y1,x2,y2 = 0,0, x2-20,y2-20
+			else:
+				#print "Quarter 2 == player in bottom left corner"
+				x1,y1,x2,y2 = 0, y2+20,x2-20, win_height
+		else: #top screen
+			if (ply > win_height/2):
+				#print "Quarter 4 == player in top right corner"
+				x1,y1,x2,y2 = x2+20, 0, win_width,y2-20
+			else:
+				#print "Quarter 1 == player in top left corner"
+				x1,y1,x2,y2 = x2+20, y2+20, win_width, win_height	
+		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2), speed=3., img=pygame.image.load("british-flag.gif").convert_alpha())
+		
+		def update(self, dt):
+			self.target = pick_best_player_target(self.x, self.y)
+			self.angle = -math.atan2((self.target.x-self.x),(self.target.y)-self.y) + math.pi/2
+			self.vx = math.cos(self.angle)
+			self.vy = math.sin(self.angle)
+			self.x = self.x + self.vx * self.speed
+			self.y = self.y + self.vy * self.speed
+			self.check_collision()
+
+		
 
 class Shot:
 	"""Generic shot class"""
