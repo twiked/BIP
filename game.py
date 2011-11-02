@@ -93,22 +93,22 @@ def init_players():
 				if (not assigned_keys):
 					players.append(Player())
 					break
-			elif e.key == pygame.K_j:
+			elif e.key == pygame.K_j and len(joys)>= 1:
 				screen.blit(background, (0,0))
 				screen.blit(font.render("Which joystick ?", True, (255,255,255)),(0,30))
 				pygame.display.update()
 				while True:
 					k = wait_key()
-					if k.key == pygame.K_1 or k.key == pygame.K_KP1 and len(joys>=1):
+					if k.key == pygame.K_1 or k.key == pygame.K_KP1:
 						players.append(PlayerJoy(joys[0]))
 						break
-					if (k.key == pygame.K_2 or k.key == pygame.K_KP2) and player_count >= 2 and len(joys>=2):
+					if (k.key == pygame.K_2 or k.key == pygame.K_KP2) and player_count >= 2 and len(joys)>=2:
 						players.append(PlayerJoy(joys[1]))
 						break
-					if (k.key == pygame.K_3 or k.key == pygame.K_KP3) and player_count >= 3 and len(joys>=3):
+					if (k.key == pygame.K_3 or k.key == pygame.K_KP3) and player_count >= 3 and len(joys)>=3:
 						players.append(PlayerJoy(joys[2]))
 						break
-					if (k.key == pygame.K_4 or k.key == pygame.K_KP4) and player_count == 4 and len(joys>=4):
+					if (k.key == pygame.K_4 or k.key == pygame.K_KP4) and player_count == 4 and len(joys)>=4:
 						players.append(PlayerJoy(joys[3]))
 						break
 				break
@@ -117,18 +117,20 @@ def init_players():
 		while True:
 			pygame.display.update()
 			e = wait_key()
-			if (not os.path.isfile("/home/twix/BIP/playerimg/" + str(pygame.key.name(e.key)) + ".png")):
+			img_path = os.path.join('playerimg', str(pygame.key.name(e.key)) + '.png')
+			if (not os.path.isfile(img_path)):
 				screen.blit(background, (0,0))
 				screen.blit(font.render("Image not valid",True,(255,255,255)), (0,30))
 				pygame.display.update()
 				continue
+			img = pygame.image.load(img_path)
 			screen.blit(background, (0,0))
-			screen.blit(players[i].image, (0,win_width-players[i].image.get_width()))
+			screen.blit(img, (0, 0))
 			screen.blit(font.render("Press the same key to confirm choice",True,(255,255,255)), (0,30))
 			pygame.display.update()
 			k = wait_key()
 			if k.key == e.key:
-				
+				players[i].image = img
 				break
 			else:
 				screen.blit(background, (0,0))
@@ -288,9 +290,9 @@ class PlayerJoy(Player):
 			self.y += self.vy * self.speed
 
 #Add players
-players.append(Player())
-for i in range(len(joys)):
-	players.append(PlayerJoy(joys[0]))
+#players.append(Player())
+#for i in range(len(joys)):
+#	players.append(PlayerJoy(joys[0]))
 
 class Bot:
 	"""Generic bot class"""
