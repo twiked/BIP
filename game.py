@@ -31,9 +31,11 @@ datatuple, masktuple = pygame.cursors.compile(curs, black='X', white=' ', xor='o
 pygame.mouse.set_cursor((8,8), (4,4), datatuple, masktuple)
 player_count = 0
 bot_ctr = 0
+score = 0
 last_shot = 0
 mouse_x = 0
 mouse_y = 0
+time_since_last_frame = 0
 dt = clock.get_time()
 win_width = 1024
 win_height = 600
@@ -85,7 +87,7 @@ def init_players():
 
 	for i in range(player_count):
 		screen.blit(background, (0,0))
-		screen.blit(font.render("What kind of controller for player {0}?".format(i), True, (255,255,255)),(0,0))
+		screen.blit(font.render("What kind of controller for player {0}?".format(i+1), True, (255,255,255)),(0,0))
 		pygame.display.update()
 		while True:
 			e = wait_key()
@@ -175,8 +177,8 @@ class Player:
 		self.y = y
 		self.vx = 0
 		self.vy = 0
-		self.width = 20
-		self.height = 20
+		self.width = 32
+		self.height = 32
 		self.firemode = 0
 		self.ch_angle = 0
 		self.ch_iradius = 40
@@ -191,10 +193,10 @@ class Player:
 		self.score = 0
 		
 	def move(self):
-		if 0 < self.x + self.vx < win_width:
-			self.x += self.vx
-		if 0 < self.y + self.vy < win_height:
-			self.y += self.vy
+		if 0 < (self.x + self.vx * self.speed * (dt/100.)) < win_width:
+			self.x += self.vx * self.speed * (dt/100.)
+		if 0 < (self.y + self.vy * self.speed * (dt/100.)) < win_height:
+			self.y += self.vy * self.speed * (dt/100.)
 
 	def shoot(self):
 		if self.isshooting and self.last_shot > 300:
@@ -218,22 +220,23 @@ class Player:
 			self.vx, self.vy = self.vx*self.speed/math.sqrt(2), self.vy*self.speed/math.sqrt(2)
 		else:
 			self.vx, self.vy = self.vx*self.speed, self.vy*self.speed
-	def update(self):
-		global dt
+	def update_crosshair(self):
 		self.ch_x1=math.cos(self.ch_angle)*self.ch_iradius+self.x
 		self.ch_y1=math.sin(self.ch_angle)*self.ch_iradius+self.y
 		self.ch_x2=math.cos(self.ch_angle)*self.ch_oradius+self.x
 		self.ch_y2=math.sin(self.ch_angle)*self.ch_oradius+self.y
+
+	def update(self):
+		global dt
+		self.update_crosshair()
 		self.shoot()
 		#Move and check collision, add score according to dmg and reward
-		for i in self.shots:
-			i.update()
-			for j in bots:
-				if check_collision(i, j):
-					j.hit(i)
-					i.hit(j)
-					# self.score += (i.damage / j.max_health) * j.reward
-					print self.score
+		for s in self.shots:
+			s.update()
+			for i in s.check_collisions():
+				self.score += i.hit(s)
+				s.hit(i)
+			
 		#Check for out of zone or destroyed shots, and delete them
 		for i in self.shots[:]:
 			if i.health <= 0:
@@ -244,7 +247,7 @@ class Player:
 
 	def hit(self, hitter):
 		self.health -= hitter.damage
-			
+		self.score -= 10*hitter.reward
 	def draw(self):
 		screen.blit(pygame.transform.smoothscale(rot_center(self.image, -math.degrees(self.ch_angle)),(32,32)), (self.x-16, self.y-16))
 		pygame.draw.aaline(screen, (255,255,255), (self.ch_x1, self.ch_y1), (self.ch_x2, self.ch_y2))
@@ -297,34 +300,24 @@ class PlayerJoy(Player):
 		if y_c:
 			self.vy = y_s / y_c
 		self.ch_angle = math.atan2(self.yc, self.xc)
-	def move(self):
-		if 0 < self.x + self.vx * self.speed < win_width:
-			self.x += self.vx * self.speed
-		if 0 < self.y + self.vy * self.speed < win_height:
-			self.y += self.vy * self.speed
-
-#Add players
-#players.append(Player())
-#for i in range(len(joys)):
-#	players.append(PlayerJoy(joys[0]))
 
 class Bot:
 	"""Generic bot class"""
 	last_spawn = 0 #Class variable to keep track of bot spawn, in order to script bot spawn
-	def __init__(self, x=0, y=0, width=20, height=20, reward=100, damage=9000, speed=2., max_health=100,img = 0 ):
+	def __init__(self, x=0, y=0, angle=0, width=20, height=20, reward=100, damage=9000, speed=10., max_health=100,img = None ):
 		self.x = x
 		self.y = y
 		self.max_health = max_health
 		self.health = self.max_health
 		self.reward = reward
-		self.angle = 0
+		self.angle = angle
 		self.vx = 0
 		self.vy = 0
 		self.speed = speed
 		self.damage = damage
 		self.target = pick_best_player_target(self.x, self.y)
 		
-		if img == 0:
+		if img == None:
 			self.image = pygame.Surface((20, 20))
 			self.width, self.height = 20, 20
 			pygame.draw.circle(self.image, (255,255,255), (self.width/2,self.height/2), 10)
@@ -332,22 +325,23 @@ class Bot:
 			self.width, self.height = img.get_width(), img.get_height()
 			self.image = pygame.Surface((self.width, self.height))
 			self.image.blit(img, (0,0))
-
+			self.image.convert_alpha()
 		
 	def hit(self, hitter):
 		self.health = self.health - hitter.damage
-		
+		return self.reward
+
 	def update(self, dt):
 		self.angle = -math.atan2((self.target.x-self.x),(self.target.y)-self.y) + math.pi/2
 		self.vx = math.cos(self.angle)
 		self.vy = math.sin(self.angle)
-		self.x = self.x + self.vx * self.speed
-		self.y = self.y + self.vy * self.speed
+		self.x = self.x + self.vx * self.speed * (dt/100.)
+		self.y = self.y + self.vy * self.speed * (dt/100.)
 		self.check_collision()
 		
 	def draw(self):
 		"""Method for printing the bot to screen """
-		screen.blit(self.image, (self.x, self.y))
+		screen.blit(rot_center(self.image, self.angle),(self.x, self.y))
 		
 	def check_collision(self):
 		global players
@@ -355,26 +349,6 @@ class Bot:
 			if check_collision(self, j):
 				j.hit(self)
 				self.hit(j)
-
-class StandardBot(Bot):
-	"""Bot with random spawn between the most far angle of the screen and player position. Random speed"""
-	def __init__(self, plx, ply):
-		x1, y1, x2, y2 = 0, 0, int(plx), int(ply)
-		if(plx > win_width/2): #bottom screen
-			if (ply > win_height/2):
-				#print "Quarter 3 == player in bottom right corner"
-				x1,y1,x2,y2 = 0,0, x2-20,y2-20
-			else:
-				#print "Quarter 2 == player in bottom left corner"
-				x1,y1,x2,y2 = 0, y2+20,x2-20, win_height
-		else: #top screen
-			if (ply > win_height/2):
-				#print "Quarter 4 == player in top right corner"
-				x1,y1,x2,y2 = x2+20, 0, win_width,y2-20
-			else:
-				#print "Quarter 1 == player in top left corner"
-				x1,y1,x2,y2 = x2+20, y2+20, win_width, win_height	
-		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2), img=pygame.image.load("british-flag.gif").convert_alpha())
 
 class ImprovedBot(Bot):
 	"""smarter StandardBot, will change target if another player is closer, faster"""
@@ -394,7 +368,7 @@ class ImprovedBot(Bot):
 			else:
 				#print "Quarter 1 == player in top left corner"
 				x1,y1,x2,y2 = x2+20, y2+20, win_width, win_height	
-		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2), speed=3., img=pygame.image.load("british-flag.gif").convert_alpha())
+		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2), speed=10., img=pygame.image.load("british-flag.gif").convert_alpha())
 		
 		def update(self, dt):
 			self.target = pick_best_player_target(self.x, self.y)
@@ -405,11 +379,9 @@ class ImprovedBot(Bot):
 			self.y = self.y + self.vy * self.speed
 			self.check_collision()
 
-		
-
 class Shot:
 	"""Generic shot class"""
-	def __init__(self, x=0, y=0, angle=0, damage=100, width=20, height=20, mode="cl", speed=2000.):
+	def __init__(self, x=0, y=0, angle=0, damage=100, width=20, height=20, mode="cl", speed=400.):
 		self.x = x
 		self.y = y
 		self.angle = angle
@@ -419,21 +391,30 @@ class Shot:
 		self.height = height
 		self.health = 100
 		self.mode = mode
-		self.image = pygame.image.load("bullet" + mode + ".png").convert()
+		img = pygame.image.load(os.path.join("shotimg", "bulletsh.png"))
+		self.width, self.height = img.get_width(), img.get_height()
+		self.image = pygame.Surface((self.width, self.height))
+		self.image.blit(img, (0,0))
 		
 		# vector of shot
 		self.vx = math.cos(angle)
 		self.vy = math.sin(angle)
 		
 	def update(self, dt = 1):
-		self.x += self.vx*dt*(self.speed/100) # use speed of bot in calculation
-		self.y += self.vy*dt*(self.speed/100)
+		self.x += self.vx*(dt/100.)*(self.speed) # use speed of bot in calculation
+		self.y += self.vy*(dt/100.)*(self.speed)
 		
 	def hit(self, hitter):
 		self.health -= hitter.damage
-	
+	def check_collisions(self):
+		collided = []
+		for b in bots:
+			if check_collision(self, b):
+				collided.append(b)
+		return collided
 	def draw(self):
-		pygame.draw.circle(screen, (255,0,0), (int(self.x), int(self.y)), 10)
+		screen.blit(self.image, (self.x, self.y))
+		
 
 class RocketShot(Shot): 
 	"""Small rocket propelled bullet that goes faster with time. Higher damage - lower initial speed -- might as well change 'mode' """
@@ -448,20 +429,24 @@ class RocketShot(Shot):
 		self.speed = min(self.speed+2, 2500) # increase shot speed / get a maximum speed for the rocket
 	# should the rocket folow a bot (check for everyshot which one to target) folow the mouse (can lead to weird behaviors) or just go straight
 	# might as well add the explosion (hit multiple bots in an area)
+	
+class Bomb(Shot):
+	def __init__(self):
+		pass
+	
 def update():
-	global bot_ctr, dt, last_shot, mouse_x, mouse_y
-
+	global bot_ctr, dt, last_shot, mouse_x, mouse_y, score
+	score = 0
 	#Spawn bots
 	bot_ctr += dt
 	if (bot_ctr >= 500):
 		bot_ctr = 0
-		bots.append(StandardBot(players[0].x, players[0].y))
+		bots.append(ImprovedBot(players[0].x, players[0].y))
 		
 	#Update every bot
 	for i in bots[:]:
 		i.update(dt)
 		if i.health <= 0:
-			players[0].score += i.reward # increase score when bot dies
 			bots.remove(i)
 			
 	#Event handling
@@ -486,9 +471,10 @@ def update():
 		i.input_()
 		i.move()
 		i.update()
+		score += i.score
 
 def draw():
-	text = font.render("Score :" + str(players[0].score),True,(255,255,255))
+	text = font.render("Score :" + str(score),True,(255,255,255))
 	screen.blit(background, (0, 0)) #Blit background to real screen
 	screen.blit(particles, (0,0))
 	particles.fill((0,0,0,0))
@@ -503,7 +489,10 @@ init_players()
 # Main loop
 while True:
 	dt = clock.get_time() #Time since last frame
-	update() #Update coords
-	draw()
-	pygame.display.update() #Send the frame to GPU
-	clock.tick(60) #Advance the time precisely
+	time_since_last_frame += dt
+	update()
+	if time_since_last_frame >= 16:
+		time_since_last_frame = 0
+		draw()
+		pygame.display.update() #Send the frame to GPU
+	clock.tick_busy_loop(600) # Advance time and limit to 60 FPS
