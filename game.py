@@ -191,6 +191,8 @@ class Player:
 		self.isshooting = False
 		self.last_shot = 0
 		self.score = 0
+		self.primary = Shot
+		self.secondary = Bomb
 		
 	def move(self):
 		if 0 < (self.x + self.vx * self.speed * (dt/100.)) < win_width:
@@ -200,7 +202,7 @@ class Player:
 
 	def shoot(self):
 		if self.isshooting and self.last_shot > 300:
-			self.shots.append(Shot(self.x - 5, self.y - 5, self.ch_angle))
+			self.shots.append(self.primary(self.x - 5, self.y - 5, self.ch_angle))
 			self.last_shot = 0
 		self.last_shot += dt
 	def input_(self):
@@ -429,8 +431,15 @@ class RocketShot(Shot):
 	# might as well add the explosion (hit multiple bots in an area)
 	
 class Bomb(Shot):
-	def __init__(self):
-		pass
+	def __init__(self, x=0, y=0, angle=0, damage=150, width=5, height=3, mode="rk", speed=3.):
+		Shot.__init__(self, x, y, angle, damage, width, height, mode, speed) # calls __init__ from parent
+		self.age = 0
+		self.maxradius = 100
+	def update(self):
+		global dt
+		self.age += dt*(self.speed/100)
+	def draw(self):
+		pygame.draw.circle(screen, (255,0,0), (self.x, self.y), self.age, width=2)
 	
 def update():
 	global bot_ctr, dt, last_shot, mouse_x, mouse_y, score
