@@ -189,6 +189,7 @@ class Player:
 		self.damage = 9000
 		self.shots = []
 		self.isshooting = False
+		self.isshooting_s = False
 		self.last_shot = 0
 		self.score = 0
 		self.primary = Shot
@@ -205,6 +206,9 @@ class Player:
 			self.shots.append(self.primary(self.x - 5, self.y - 5, self.ch_angle))
 			self.last_shot = 0
 		self.last_shot += dt
+		if self.isshooting_s and self.last_shot > 300:
+			self.shots.append(self.secondary(self.x - 5, self.y - 5, self.ch_angle))
+			self.last_shot = 0
 	def input_(self):
 		"""Input is managed in the global update loop"""
 		self.ch_angle = -math.atan2((mouse_x-self.x),(mouse_y-self.y)) + math.pi/2
@@ -306,7 +310,7 @@ class PlayerJoy(Player):
 class Bot:
 	"""Generic bot class"""
 	last_spawn = 0 #Class variable to keep track of bot spawn, in order to script bot spawn
-	def __init__(self, x=0, y=0, angle=0, width=20, height=20, reward=100, damage=9000, speed=10., max_health=100,img = None ):
+	def __init__(self, x=0, y=0, angle=0, width=20, height=20, reward=100, damage=100, speed=10., max_health=100,img = None ):
 		self.x = x
 		self.y = y
 		self.max_health = max_health
@@ -431,15 +435,24 @@ class RocketShot(Shot):
 	# might as well add the explosion (hit multiple bots in an area)
 	
 class Bomb(Shot):
-	def __init__(self, x=0, y=0, angle=0, damage=150, width=5, height=3, mode="rk", speed=3.):
+	def __init__(self, x=0, y=0, angle=0, damage=150, width=5, height=3, mode="rk", speed=64.):
 		Shot.__init__(self, x, y, angle, damage, width, height, mode, speed) # calls __init__ from parent
-		self.age = 0
+		self.age = 1
 		self.maxradius = 100
+		self.health = 9000
 	def update(self):
 		global dt
 		self.age += dt*(self.speed/100)
+		if self.age >= 100:
+			self.health = 0
 	def draw(self):
-		pygame.draw.circle(screen, (255,0,0), (self.x, self.y), self.age, width=2)
+		pygame.draw.circle(screen, (255,0,0), (int(self.x), int(self.y)), int(self.age),1)
+	def check_collisions(self):
+		collided = []
+		for b in bots:
+			if math.hypot(b.x-self.x, b.y-self.y) < self.age:
+				collided.append(b)
+		return collided
 	
 def update():
 	global bot_ctr, dt, last_shot, mouse_x, mouse_y, score
@@ -463,9 +476,13 @@ def update():
 		elif event.type == pygame.MOUSEBUTTONDOWN:
 			if event.button == 1:
 				players[0].isshooting = True
+			elif event.button == 3:
+				players[0].isshooting_s = True
 		elif event.type == pygame.MOUSEBUTTONUP:
 			if event.button == 1:
 				players[0].isshooting = False
+			elif event.button == 3:
+				players[0].isshooting_s = False	
 		elif event.type == pygame.KEYDOWN:
 			if event.key == pygame.K_ESCAPE:
 				pygame.quit()
