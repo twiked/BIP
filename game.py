@@ -200,7 +200,7 @@ class Player:
 
 	def shoot(self):
 		if self.isshooting and self.last_shot > 300:
-			self.shots.append(Shot(self.x, self.y, self.ch_angle))
+			self.shots.append(Shot(self.x - 5, self.y - 5, self.ch_angle))
 			self.last_shot = 0
 		self.last_shot += dt
 	def input_(self):
@@ -341,7 +341,7 @@ class Bot:
 		
 	def draw(self):
 		"""Method for printing the bot to screen """
-		screen.blit(rot_center(self.image, self.angle),(self.x, self.y))
+		screen.blit(self.image,(self.x, self.y))
 		
 	def check_collision(self):
 		global players
@@ -391,10 +391,8 @@ class Shot:
 		self.height = height
 		self.health = 100
 		self.mode = mode
-		img = pygame.image.load(os.path.join("shotimg", "bulletsh.png"))
-		self.width, self.height = img.get_width(), img.get_height()
-		self.image = pygame.Surface((self.width, self.height))
-		self.image.blit(img, (0,0))
+		self.image = pygame.image.load(os.path.join("shotimg", "bulletsh.png")).convert_alpha()
+		self.width, self.height = self.image.get_width(), self.image.get_height()
 		
 		# vector of shot
 		self.vx = math.cos(angle)
@@ -413,7 +411,7 @@ class Shot:
 				collided.append(b)
 		return collided
 	def draw(self):
-		screen.blit(self.image, (self.x, self.y))
+		screen.blit(rot_center(self.image, math.degrees(-self.angle)), (self.x, self.y))
 		
 
 class RocketShot(Shot): 
