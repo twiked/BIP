@@ -149,6 +149,7 @@ def rot_center(image, angle):
 	rot_rect.center = rot_image.get_rect().center
 	rot_image = rot_image.subsurface(rot_rect).copy()
 	return rot_image
+	
 
 def check_collision(a, b):
 	"""Check collisions between 2 objects. Object must have x,y,width and height attributes"""
@@ -191,7 +192,7 @@ class Player:
 		self.isshooting_s = False
 		self.last_shot = 0
 		self.score = 0
-		self.primary = Shot
+		self.primary = Bullet
 		self.secondary = Bomb
 		
 	def move(self):
@@ -202,7 +203,7 @@ class Player:
 
 	def shoot(self):
 		if self.isshooting and self.last_shot > 300:
-			self.shots.append(self.primary(self.x - 5, self.y - 5, self.ch_angle))
+			self.shots.append(self.primary(self.x + self.width/2, self.y + self.height/2, self.ch_angle))
 			self.last_shot = 0
 		self.last_shot += dt
 		if self.isshooting_s and self.last_shot > 300:
@@ -226,10 +227,10 @@ class Player:
 		else:
 			self.vx, self.vy = self.vx*self.speed, self.vy*self.speed
 	def update_crosshair(self):
-		self.ch_x1=math.cos(self.ch_angle)*self.ch_iradius+self.x
-		self.ch_y1=math.sin(self.ch_angle)*self.ch_iradius+self.y
-		self.ch_x2=math.cos(self.ch_angle)*self.ch_oradius+self.x
-		self.ch_y2=math.sin(self.ch_angle)*self.ch_oradius+self.y
+		self.ch_x1=math.cos(self.ch_angle)*self.ch_iradius+self.x + 16
+		self.ch_y1=math.sin(self.ch_angle)*self.ch_iradius+self.y + 16
+		self.ch_x2=math.cos(self.ch_angle)*self.ch_oradius+self.x + 16
+		self.ch_y2=math.sin(self.ch_angle)*self.ch_oradius+self.y + 16
 
 	def update(self):
 		global dt
@@ -254,7 +255,7 @@ class Player:
 		self.health -= hitter.damage
 		self.score -= 10*hitter.reward
 	def draw(self):
-		screen.blit(pygame.transform.smoothscale(rot_center(self.image, -math.degrees(self.ch_angle)),(32,32)), (self.x-16, self.y-16))
+		screen.blit(pygame.transform.smoothscale(rot_center(self.image, -math.degrees(self.ch_angle)),(self.width,self.height)), (self.x, self.y))
 		pygame.draw.aaline(screen, (255,255,255), (self.ch_x1, self.ch_y1), (self.ch_x2, self.ch_y2))
 		for i in self.shots: #Draw every player shot to screen
 			i.draw()
@@ -386,18 +387,16 @@ class ImprovedBot(Bot):
 
 class Shot:
 	"""Generic shot class"""
-	def __init__(self, x=0, y=0, angle=0, damage=100, width=20, height=20, mode="cl", speed=400.):
-		self.x = x
-		self.y = y
+	def __init__(self, x, y, angle, damage, w, h, image = "bulletsh.png", speed=400., health = 100):
 		self.angle = angle
 		self.speed = speed
 		self.damage = damage
-		self.width = width
-		self.height = height
+		self.width = w
+		self.height = h
+		self.x = x - self.width/2
+		self.y = y - self.height/2
 		self.health = 100
-		self.mode = mode
-		self.image = pygame.image.load(os.path.join("shotimg", "bulletsh.png")).convert_alpha()
-		self.width, self.height = self.image.get_width(), self.image.get_height()
+		self.image = pygame.image.load(os.path.join("shotimg", image)).convert_alpha()
 		
 		# vector of shot
 		self.vx = math.cos(angle)
@@ -416,8 +415,12 @@ class Shot:
 				collided.append(b)
 		return collided
 	def draw(self):
-		screen.blit(rot_center(self.image, math.degrees(-self.angle)), (self.x, self.y))
-		
+		#screen.blit(rot_center(self.image, math.degrees(-self.angle)), (self.x, self.y))
+		screen.blit(pygame.transform.smoothscale(rot_center(self.image, -math.degrees(self.angle)),(self.width, self.height)), (self.x, self.y))
+
+class Bullet(Shot):
+	def __init__(self, x, y, angle):
+		Shot.__init__(self, x, y, angle, 100, 16, 16, "bulletsh.png", 400., 100)
 
 class RocketShot(Shot): 
 	"""Small rocket propelled bullet that goes faster with time. Higher damage - lower initial speed -- might as well change 'mode' """
