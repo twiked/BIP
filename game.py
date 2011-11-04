@@ -154,9 +154,8 @@ def check_collision(a, b):
 	"""Check collisions between 2 objects. Object must have x,y,width and height attributes"""
 	if (a.x + a.width > b.x) and (a.x < b.x + b.width) and (a.y + a.height > b.y) and (a.y < b.y + b.height):
 		return True
-	else:
-		return False
-		
+	return False
+
 def pick_best_player_target(x, y): 
 	""" Choose the closest player from pos(x, y) """
 	mindist = 100000
