@@ -446,7 +446,7 @@ class Bomb(Shot):
 		if self.age >= 100:
 			self.health = 0
 	def draw(self):
-		pygame.draw.circle(screen, (255,0,0), (int(self.x), int(self.y)), int(self.age),1)
+		pygame.gfxdraw.aacircle(screen, (int(self.x), int(self.y)), int(self.age), (255,0,0))
 	def check_collisions(self):
 		collided = []
 		for b in bots:
