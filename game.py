@@ -271,10 +271,16 @@ class PlayerJoy(Player):
 			self.hlaxis = 4
 			self.vlaxis = 3
 		elif sys.platform == 'linux2':
-			self.hmaxis = 0
-			self.vmaxis = 1
-			self.hlaxis = 2
-			self.vlaxis = 3
+			if self.joy.get_name() == 'Xbox Gamepad (userspace driver)'
+				self.hmaxis = 0
+				self.vmaxis = 1
+				self.hlaxis = 2
+				self.vlaxis = 3
+			elif self.joy.get_name() == 'USB Gamepad '
+				self.hmaxis = 0
+				self.vmaxis = 1
+				self.hlaxis = 3
+				self.vlaxis = 4
 		self.xc = 0
 		self.yc = 0
 	def input_(self):
