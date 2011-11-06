@@ -276,7 +276,7 @@ class PlayerJoy(Player):
 				self.vmaxis = 1
 				self.hlaxis = 2
 				self.vlaxis = 3
-			elif self.joy.get_name() == 'USB Gamepad '
+			elif self.joy.get_name() == 'USB Gamepad ':
 				self.hmaxis = 0
 				self.vmaxis = 1
 				self.hlaxis = 3
@@ -284,8 +284,7 @@ class PlayerJoy(Player):
 		self.xc = 0
 		self.yc = 0
 	def input_(self):
-		"""Take relevant elements from the event queue to control the player, 
-		update vectors and angles accordingly. Put back others events to the event queue"""
+		"""Take relevant elements from the event queue to control the player, update vectors and angles accordingly. Put back others events to the event queue"""
 		x_s, y_s, xc, yc, x_c, y_c = 0,0,0,0,0,0
 		for e in pygame.event.get((pygame.JOYAXISMOTION, pygame.JOYBUTTONUP, pygame.JOYBUTTONDOWN)):
 			if e.joy == self.joy.get_id():
