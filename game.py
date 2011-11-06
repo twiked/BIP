@@ -515,12 +515,12 @@ def update():
 	global bot_ctr, dt, last_shot, mouse_x, mouse_y, score
 	score = 0
 	#Spawn bots
-	bot_ctr += dt
-	if (bot_ctr == 500/player_count):
-		bots.append(TankBot(players[0].x, players[0].y))
-	if (bot_ctr >= 2000/player_count):
-		bot_ctr = 0
+	bot_ctr += 1
+	if (bot_ctr%(400-(dt / 10000)) == 0/len(players)):
 		bots.append(ImprovedBot(players[0].x, players[0].y))
+	if (bot_ctr >= 2000/len(players)):
+		bot_ctr = 0
+		bots.append(TankBot(players[0].x, players[0].y))
 		
 	#Update every bot
 	for i in bots[:]:
