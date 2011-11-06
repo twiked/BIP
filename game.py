@@ -343,7 +343,9 @@ class Bot:
 		if self.is_hitting == False:
 			self.health = self.health - hitter.damage
 			self.is_hitting = hitter
-			return self.reward
+			if self.health < 0:
+				return self.reward
+		return 0
 
 	def update(self, dt):
 		self.angle = -math.atan2((self.target.x-self.x),(self.target.y)-self.y) + math.pi/2
@@ -417,15 +419,15 @@ class TankBot(Bot):
 			else:
 				#print "Quarter 1 == player in top left corner"
 				x1,y1,x2,y2 = x2+20, y2+20, win_width, win_height	
-		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2), speed=10., img=pygame.image.load("british-flag.gif").convert_alpha())
+		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2), speed=10.,max_health=500, img=pygame.image.load("itm_circle_grey.png").convert_alpha())
 		
 		def hit(self, hitter):
 			if self.is_hitting == False:
 				self.health = self.health - (hitter.damage/5) # resist damages
 				self.is_hitting = hitter
-				if self.health > 0:
-					hitter.angle += math.pi # return shots to the player
-				return self.reward
+				if self.health < 0:
+					return self.reward
+			return 0
 
 class Shot:
 	"""Generic shot class"""
@@ -437,7 +439,7 @@ class Shot:
 		self.height = h
 		self.x = x - self.width/2
 		self.y = y - self.height/2
-		self.health = 100
+		self.health = health
 		self.is_hitting = False
 		self.image = pygame.image.load(os.path.join("shotimg", image)).convert_alpha()
 		
@@ -456,6 +458,10 @@ class Shot:
 		if self.is_hitting == False:
 			self.health = self.health - hitter.damage
 			self.is_hitting = hitter
+			if isinstance (hitter, TankBot): # "is a"
+				self.angle += random.uniform(math.pi/2, 3*math.pi/2) # return shots to the player
+				self.vx = math.cos(self.angle)
+				self.vy = math.sin(self.angle)
 		
 	def check_collisions(self):
 		collided = []
@@ -469,7 +475,7 @@ class Shot:
 
 class Bullet(Shot):
 	def __init__(self, x, y, angle):
-		Shot.__init__(self, x, y, angle, 100, 16, 16, "bulletsh.png", 400., 100)
+		Shot.__init__(self, x, y, angle, 100, 16, 16, "bulletsh.png", 400., 200)
 
 class RocketShot(Shot): 
 	"""Small rocket propelled bullet that goes faster with time. Higher damage - lower initial speed -- might as well change 'mode' """
@@ -510,7 +516,9 @@ def update():
 	score = 0
 	#Spawn bots
 	bot_ctr += dt
-	if (bot_ctr >= 500):
+	if (bot_ctr == 500/player_count):
+		bots.append(TankBot(players[0].x, players[0].y))
+	if (bot_ctr >= 2000/player_count):
 		bot_ctr = 0
 		bots.append(ImprovedBot(players[0].x, players[0].y))
 		
