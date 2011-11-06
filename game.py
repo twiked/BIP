@@ -36,6 +36,8 @@ last_shot = 0
 mouse_x = 0
 mouse_y = 0
 time_since_last_frame = 0
+played_time = 0
+difficulty_modifier = 1
 dt = clock.get_time()
 win_width = 1024
 win_height = 600
@@ -340,7 +342,7 @@ class Bot:
 			self.image.convert_alpha()
 		
 	def hit(self, hitter):
-		if self.is_hitting == False:
+		if self.is_hitting != hitter:
 			self.health = self.health - hitter.damage
 			self.is_hitting = hitter
 			if self.health < 0:
@@ -516,8 +518,8 @@ def update():
 	score = 0
 	#Spawn bots
 	bot_ctr += 1
-	if (bot_ctr%(max(400-(dt / 10000), 80))/len(players) == 0): # more bots through time and with more players
-		bots.append(ImprovedBot(players[0].x, players[0].y))
+	if (bot_ctr%(max(600-(played_time / 20000), 80/difficulty_modifier/len(players) )) == 0): # more bots through time and with more players
+		bots.append(ImprovedBot(players[0].x, players[0].y)) # oh boy !
 	if (bot_ctr >= 2000/len(players)):
 		bot_ctr = 0
 		bots.append(TankBot(players[0].x, players[0].y))
@@ -572,6 +574,7 @@ init_players()
 # Main loop
 while True:
 	dt = clock.get_time() #Time since last frame
+	played_time += dt * len(players) * difficulty_modifier
 	time_since_last_frame += dt
 	update()
 	if time_since_last_frame >= 16:
