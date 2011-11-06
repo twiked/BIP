@@ -271,7 +271,7 @@ class PlayerJoy(Player):
 			self.hlaxis = 4
 			self.vlaxis = 3
 		elif sys.platform == 'linux2':
-			if self.joy.get_name() == 'Xbox Gamepad (userspace driver)'
+			if self.joy.get_name() == 'Xbox Gamepad (userspace driver)':
 				self.hmaxis = 0
 				self.vmaxis = 1
 				self.hlaxis = 2
