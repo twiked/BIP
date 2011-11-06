@@ -157,11 +157,11 @@ def check_collision(a, b):
 		return True
 	return False
 
-def pick_best_player_target(x, y): 
-	""" Choose the closest player from pos(x, y) """
+def pick_best_target_in_list(x, y, l): 
+	""" Choose the closest 'l' object from pos(x, y) """
 	mindist = 100000
 	target = 0
-	for i in players:
+	for i in l:
 		angle = -math.atan2((i.x-x),(i.y)-y) + math.pi/2
 		vx = math.cos(angle)
 		vy = math.sin(angle)
@@ -321,7 +321,7 @@ class Bot:
 		self.vy = 0
 		self.speed = speed
 		self.damage = damage
-		self.target = pick_best_player_target(self.x, self.y)
+		self.target = pick_best_target_in_list(self.x, self.y, players) # pick best player target
 		
 		if img == None:
 			self.image = pygame.Surface((20, 20))
@@ -377,7 +377,7 @@ class ImprovedBot(Bot):
 		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2), speed=10., img=pygame.image.load("british-flag.gif").convert_alpha())
 		
 		def update(self, dt):
-			self.target = pick_best_player_target(self.x, self.y)
+			self.target = pick_best_target_in_list(self.x, self.y, players)
 			self.angle = -math.atan2((self.target.x-self.x),(self.target.y)-self.y) + math.pi/2
 			self.vx = math.cos(self.angle)
 			self.vy = math.sin(self.angle)
