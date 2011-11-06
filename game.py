@@ -340,7 +340,7 @@ class Bot:
 			self.image.convert_alpha()
 		
 	def hit(self, hitter):
-		if self.is_hitting == False
+		if self.is_hitting == False:
 			self.health = self.health - hitter.damage
 			self.is_hitting = hitter
 			return self.reward
@@ -352,8 +352,8 @@ class Bot:
 		self.x = self.x + self.vx * self.speed * (dt/100.)
 		self.y = self.y + self.vy * self.speed * (dt/100.)
 		self.check_collision()
-		if self.is_hitting != False
-			if check_collision(self, is_hitting) == False
+		if self.is_hitting != False:
+			if check_collision(self, is_hitting) == False:
 				self.is_hitting = False
 		
 	def draw(self):
@@ -395,8 +395,8 @@ class ImprovedBot(Bot):
 			self.x = self.x + self.vx * self.speed
 			self.y = self.y + self.vy * self.speed
 			self.check_collision()
-			if self.is_hitting != False
-				if check_collision(self, is_hitting) == False
+			if self.is_hitting != False:
+				if check_collision(self, is_hitting) == False:
 					self.is_hitting = False
 			
 class TankBot(Bot):
@@ -420,7 +420,7 @@ class TankBot(Bot):
 		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2), speed=10., img=pygame.image.load("british-flag.gif").convert_alpha())
 		
 		def hit(self, hitter):
-			if self.is_hitting == False
+			if self.is_hitting == False:
 				self.health = self.health - (hitter.damage/5) # resist damages
 				self.is_hitting = hitter
 				if self.health > 0:
@@ -448,12 +448,12 @@ class Shot:
 	def update(self, dt = 1):
 		self.x += self.vx*(dt/100.)*(self.speed) # use speed of bot in calculation
 		self.y += self.vy*(dt/100.)*(self.speed)
-		if self.is_hitting != False
-			if check_collision(self, is_hitting) == False
+		if self.is_hitting != False:
+			if check_collision(self, is_hitting) == False:
 				self.is_hitting = False
 		
 	def hit(self, hitter):
-		if self.is_hitting == False
+		if self.is_hitting == False:
 			self.health = self.health - hitter.damage
 			self.is_hitting = hitter
 		
