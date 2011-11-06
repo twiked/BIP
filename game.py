@@ -437,8 +437,8 @@ class RocketShot(Shot):
 	# might as well add the explosion (hit multiple bots in an area)
 	
 class Bomb(Shot):
-	def __init__(self, x=0, y=0, angle=0, damage=150, width=5, height=3, mode="rk", speed=64.):
-		Shot.__init__(self, x, y, angle, damage, width, height, mode, speed) # calls __init__ from parent
+	def __init__(self, x=0, y=0, angle=0):
+		Shot.__init__(self, x, y, angle, 150, 5, 3, "bomb.png", 65)
 		self.age = 1
 		self.maxradius = 100
 		self.health = 9000
