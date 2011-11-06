@@ -324,6 +324,7 @@ class Bot:
 		self.angle = angle
 		self.vx = 0
 		self.vy = 0
+		self.is_hitting = False
 		self.speed = speed
 		self.damage = damage
 		self.target = pick_best_target_in_list(self.x, self.y, players) # pick best player target
@@ -339,8 +340,10 @@ class Bot:
 			self.image.convert_alpha()
 		
 	def hit(self, hitter):
-		self.health = self.health - hitter.damage
-		return self.reward
+		if self.is_hitting == False
+			self.health = self.health - hitter.damage
+			self.is_hitting = hitter
+			return self.reward
 
 	def update(self, dt):
 		self.angle = -math.atan2((self.target.x-self.x),(self.target.y)-self.y) + math.pi/2
@@ -349,6 +352,9 @@ class Bot:
 		self.x = self.x + self.vx * self.speed * (dt/100.)
 		self.y = self.y + self.vy * self.speed * (dt/100.)
 		self.check_collision()
+		if self.is_hitting != False
+			if check_collision(self, is_hitting) == False
+				self.is_hitting = False
 		
 	def draw(self):
 		"""Method for printing the bot to screen """
@@ -389,6 +395,37 @@ class ImprovedBot(Bot):
 			self.x = self.x + self.vx * self.speed
 			self.y = self.y + self.vy * self.speed
 			self.check_collision()
+			if self.is_hitting != False
+				if check_collision(self, is_hitting) == False
+					self.is_hitting = False
+			
+class TankBot(Bot):
+	"""TankBot is resistant to damage, and return shot to the player"""
+	def __init__(self, plx, ply):
+		x1, y1, x2, y2 = 0, 0, int(plx), int(ply)
+		if(plx > win_width/2): #bottom screen
+			if (ply > win_height/2):
+				#print "Quarter 3 == player in bottom right corner"
+				x1,y1,x2,y2 = 0,0, x2-20,y2-20
+			else:
+				#print "Quarter 2 == player in bottom left corner"
+				x1,y1,x2,y2 = 0, y2+20,x2-20, win_height
+		else: #top screen
+			if (ply > win_height/2):
+				#print "Quarter 4 == player in top right corner"
+				x1,y1,x2,y2 = x2+20, 0, win_width,y2-20
+			else:
+				#print "Quarter 1 == player in top left corner"
+				x1,y1,x2,y2 = x2+20, y2+20, win_width, win_height	
+		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2), speed=10., img=pygame.image.load("british-flag.gif").convert_alpha())
+		
+		def hit(self, hitter):
+			if self.is_hitting == False
+				self.health = self.health - (hitter.damage/5) # resist damages
+				self.is_hitting = hitter
+				if self.health > 0:
+					hitter.angle += math.pi # return shots to the player
+				return self.reward
 
 class Shot:
 	"""Generic shot class"""
@@ -401,6 +438,7 @@ class Shot:
 		self.x = x - self.width/2
 		self.y = y - self.height/2
 		self.health = 100
+		self.is_hitting = False
 		self.image = pygame.image.load(os.path.join("shotimg", image)).convert_alpha()
 		
 		# vector of shot
@@ -410,9 +448,15 @@ class Shot:
 	def update(self, dt = 1):
 		self.x += self.vx*(dt/100.)*(self.speed) # use speed of bot in calculation
 		self.y += self.vy*(dt/100.)*(self.speed)
+		if self.is_hitting != False
+			if check_collision(self, is_hitting) == False
+				self.is_hitting = False
 		
 	def hit(self, hitter):
-		self.health -= hitter.damage
+		if self.is_hitting == False
+			self.health = self.health - hitter.damage
+			self.is_hitting = hitter
+		
 	def check_collisions(self):
 		collided = []
 		for b in bots:
