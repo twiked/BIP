@@ -516,7 +516,7 @@ def update():
 	score = 0
 	#Spawn bots
 	bot_ctr += 1
-	if (bot_ctr%(400-(dt / 10000)) == 0/len(players)):
+	if (bot_ctr%(max(400-(dt / 10000), 80))/len(players) == 0): # more bots through time and with more players
 		bots.append(ImprovedBot(players[0].x, players[0].y))
 	if (bot_ctr >= 2000/len(players)):
 		bot_ctr = 0
