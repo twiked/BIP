@@ -353,7 +353,7 @@ class Bot:
 		self.y = self.y + self.vy * self.speed * (dt/100.)
 		self.check_collision()
 		if self.is_hitting != False:
-			if check_collision(self, is_hitting) == False:
+			if check_collision(self, self.is_hitting) == False:
 				self.is_hitting = False
 		
 	def draw(self):
@@ -396,7 +396,7 @@ class ImprovedBot(Bot):
 			self.y = self.y + self.vy * self.speed
 			self.check_collision()
 			if self.is_hitting != False:
-				if check_collision(self, is_hitting) == False:
+				if check_collision(self, self.is_hitting) == False:
 					self.is_hitting = False
 			
 class TankBot(Bot):
@@ -449,7 +449,7 @@ class Shot:
 		self.x += self.vx*(dt/100.)*(self.speed) # use speed of bot in calculation
 		self.y += self.vy*(dt/100.)*(self.speed)
 		if self.is_hitting != False:
-			if check_collision(self, is_hitting) == False:
+			if check_collision(self, self.is_hitting) == False:
 				self.is_hitting = False
 		
 	def hit(self, hitter):
