@@ -10,7 +10,7 @@ pygame.init()
 pygame.joystick.init()
 joys = []
 for i in range(pygame.joystick.get_count()):
-	joys.append(pygame.joystick.Joystick(0))
+	joys.append(pygame.joystick.Joystick(i))
 	joys[i].init()
 clock = pygame.time.Clock()
 # Font object to write text with it
@@ -301,7 +301,7 @@ class PlayerJoy(Player):
 						self.xc = e.value
 					elif e.axis == self.vlaxis: # Look away too
 						self.yc = e.value
-					if e.axis == self.hmaxis: # x movement
+					elif e.axis == self.hmaxis: # x movement
 						self.vx = e.value
 					elif e.axis == self.vmaxis: # y movement
 						self.vy = e.value
