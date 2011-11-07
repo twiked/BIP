@@ -1,9 +1,14 @@
 - Add player life
-- Check collision (Player vs bots, Bullets vs Bots)
+- Make particles
 - End Game
-- Display bot health somehow
+
 
 Low priority :
 
 - Add more type of bots
 - Add more type of bullets
+
+Done :
+
+- Check collision (Player vs bots, Bullets vs Bots)
+- Display bot health somehow -> IGNORED
