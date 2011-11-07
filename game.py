@@ -199,9 +199,9 @@ class Player:
 		self.secondary = Bomb
 		
 	def move(self):
-		if 0 < (self.x + self.vx * self.speed * (dt/100.)) < win_width:
+		if 0 < (self.x + self.vx * self.speed * (dt/100.)) < win_width - self.width:
 			self.x += self.vx * self.speed * (dt/100.)
-		if 0 < (self.y + self.vy * self.speed * (dt/100.)) < win_height:
+		if 0 < (self.y + self.vy * self.speed * (dt/100.)) < win_height - self.height:
 			self.y += self.vy * self.speed * (dt/100.)
 
 	def shoot(self):
@@ -226,9 +226,7 @@ class Player:
 		if keys[pygame.K_UP]:
 			players[0].vy -= 1
 		if abs(self.vx)+abs(self.vy) > 1:
-			self.vx, self.vy = self.vx/math.sqrt(2), self.vy*self.speed/math.sqrt(2)
-		else:
-			self.vx, self.vy = self.vx, self.vy*self.speed
+			self.vx, self.vy = self.vx/math.sqrt(2), self.vy/math.sqrt(2)
 	def update_crosshair(self):
 		self.ch_x1=math.cos(self.ch_angle)*self.ch_iradius+self.x + 16
 		self.ch_y1=math.sin(self.ch_angle)*self.ch_iradius+self.y + 16
@@ -337,9 +335,7 @@ class Bot:
 			pygame.draw.circle(self.image, (255,255,255), (self.width/2,self.height/2), 10)
 		else:
 			self.width, self.height = img.get_width(), img.get_height()
-			self.image = pygame.Surface((self.width, self.height))
-			self.image.blit(img, (0,0))
-			self.image.convert_alpha()
+			self.image = img.convert_alpha()
 		
 	def hit(self, hitter):
 		if self.is_hitting != hitter:
@@ -423,12 +419,12 @@ class TankBot(Bot):
 				x1,y1,x2,y2 = x2+20, y2+20, win_width, win_height	
 		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2), speed=10.,max_health=500, img=pygame.image.load("itm_circle_grey.png").convert_alpha())
 		
-		def hit(self, hitter):
-			if self.is_hitting == False:
-				self.health = self.health - (hitter.damage/5) # resist damages
-				if self.health <= 0:
-					return self.reward
-			return 0
+	def hit(self, hitter):
+		if self.is_hitting == False:
+			self.health = self.health - (hitter.damage/5) # resist damages
+			if self.health <= 0:
+				return self.reward
+		return 0
 
 class Shot:
 	"""Generic shot class"""
