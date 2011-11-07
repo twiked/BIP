@@ -2,6 +2,7 @@
 
 import pygame, math, random, sys, os
 from pygame.locals import *
+import pygame.gfxdraw
 
 pygame.init()
 
@@ -427,6 +428,7 @@ class TankBot(Bot):
 			if self.is_hitting == False:
 				self.health = self.health - (hitter.damage/5) # resist damages
 				self.is_hitting = hitter
+				print 'Cool'
 				if self.health < 0:
 					return self.reward
 			return 0
@@ -464,6 +466,11 @@ class Shot:
 				self.angle += random.uniform(math.pi/2, 3*math.pi/2) # return shots to the player
 				self.vx = math.cos(self.angle)
 				self.vy = math.sin(self.angle)
+	
+	def set_angle(angle):
+		self.angle = angle
+		self.vx = math.cos(angle)
+		self.vy = math.sin(angle)
 		
 	def check_collisions(self):
 		collided = []
@@ -482,7 +489,7 @@ class Bullet(Shot):
 class RocketShot(Shot): 
 	"""Small rocket propelled bullet that goes faster with time. Higher damage - lower initial speed -- might as well change 'mode' """
 	
-	def __init__(self, x=0, y=0, angle=0, damage=150, width=5, height=3, mode="rk", speed=50.):
+	def __init__(self, x=0, y=0, angle=0, damage=150, w=5, h=3, mode="rk", speed=50.):
 		Shot.__init__(self, x, y, angle, damage, width, height, mode, speed) # calls __init__ from parent
 		self.health = 1 # low health so it can't go through
 
@@ -495,17 +502,18 @@ class RocketShot(Shot):
 	
 class Bomb(Shot):
 	def __init__(self, x=0, y=0, angle=0):
-		Shot.__init__(self, x, y, angle, 150, 5, 3, "bomb.png", 65)
+		Shot.__init__(self, x=x+16, y=y+16, angle=angle, damage=30, w=5, h=3, speed=1)
 		self.age = 1
 		self.maxradius = 100
 		self.health = 9000
 	def update(self):
 		global dt
-		self.age += dt*(self.speed/100)
+		print self.age
+		self.age += dt*self.speed
 		if self.age >= 100:
 			self.health = 0
 	def draw(self):
-		pygame.gfxdraw.aacircle(screen, (int(self.x), int(self.y)), int(self.age), (255,0,0))
+		pygame.gfxdraw.aacircle(screen, int(self.x), int(self.y), self.age, (255,0,0))
 	def check_collisions(self):
 		collided = []
 		for b in bots:
