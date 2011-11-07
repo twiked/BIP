@@ -346,7 +346,7 @@ class Bot:
 		if self.is_hitting != hitter:
 			self.health = self.health - hitter.damage
 			self.is_hitting = hitter
-			if self.health < 0:
+			if self.health <= 0:
 				return self.reward
 		return 0
 
@@ -427,9 +427,7 @@ class TankBot(Bot):
 		def hit(self, hitter):
 			if self.is_hitting == False:
 				self.health = self.health - (hitter.damage/5) # resist damages
-				self.is_hitting = hitter
-				print 'Cool'
-				if self.health < 0:
+				if self.health <= 0:
 					return self.reward
 			return 0
 
