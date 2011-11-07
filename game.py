@@ -518,6 +518,16 @@ class Bomb(Shot):
 				collided.append(b)
 		return collided
 	
+class Particle:
+	def __init__(self, x=0, y=0, vx=0, vy=0:
+		self.x = x
+		self.y = y
+		self.vx = vx
+		self.vy = vy
+
+class ParticleEmitter():
+	def __init__(self):
+		pass
 def update():
 	global bot_ctr, dt, last_shot, mouse_x, mouse_y, score
 	score = 0
