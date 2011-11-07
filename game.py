@@ -186,7 +186,7 @@ class Player:
 		self.ch_angle = 0
 		self.ch_iradius = 40
 		self.ch_oradius = 60
-		self.speed = 4
+		self.speed = 16
 		self.image = pygame.image.load(os.path.join("playerimg", "s.png")).convert_alpha()
 		self.health = 100
 		self.damage = 9000
