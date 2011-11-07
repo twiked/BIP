@@ -226,9 +226,9 @@ class Player:
 		if keys[pygame.K_UP]:
 			players[0].vy -= 1
 		if abs(self.vx)+abs(self.vy) > 1:
-			self.vx, self.vy = self.vx*self.speed/math.sqrt(2), self.vy*self.speed/math.sqrt(2)
+			self.vx, self.vy = self.vx/math.sqrt(2), self.vy*self.speed/math.sqrt(2)
 		else:
-			self.vx, self.vy = self.vx*self.speed, self.vy*self.speed
+			self.vx, self.vy = self.vx, self.vy*self.speed
 	def update_crosshair(self):
 		self.ch_x1=math.cos(self.ch_angle)*self.ch_iradius+self.x + 16
 		self.ch_y1=math.sin(self.ch_angle)*self.ch_iradius+self.y + 16
@@ -269,10 +269,16 @@ class PlayerJoy(Player):
 		self.joy = joy
 		self.joy.init()
 		if sys.platform == 'win32':
-			self.hmaxis = 0
-			self.vmaxis = 1
-			self.hlaxis = 4
-			self.vlaxis = 3
+			if self.joy.get_name() == 'Controller (XBOX 360 For Windows)':
+				self.hmaxis = 0
+				self.vmaxis = 1
+				self.hlaxis = 4
+				self.vlaxis = 3
+			else:
+				self.hmaxis = 0
+				self.vmaxis = 1
+				self.hlaxis = 4
+				self.vlaxis = 3
 		elif sys.platform == 'linux2':
 			if self.joy.get_name() == 'Xbox Gamepad (userspace driver)':
 				self.hmaxis = 0
@@ -288,7 +294,6 @@ class PlayerJoy(Player):
 		self.yc = 0
 	def input_(self):
 		"""Take relevant elements from the event queue to control the player, update vectors and angles accordingly. Put back others events to the event queue"""
-		x_s, y_s, xc, yc, x_c, y_c = 0,0,0,0,0,0
 		for e in pygame.event.get((pygame.JOYAXISMOTION, pygame.JOYBUTTONUP, pygame.JOYBUTTONDOWN)):
 			if e.joy == self.joy.get_id():
 				if e.type == pygame.JOYAXISMOTION:
@@ -297,11 +302,9 @@ class PlayerJoy(Player):
 					elif e.axis == self.vlaxis: # Look away too
 						self.yc = e.value
 					if e.axis == self.hmaxis: # x movement
-						x_c += 1.
-						x_s += e.value
+						self.vx = e.value
 					elif e.axis == self.vmaxis: # y movement
-						y_c += 1.
-						y_s = e.value
+						self.vy = e.value
 				else:
 					if e.type == pygame.JOYBUTTONDOWN:
 						self.isshooting = True
@@ -309,10 +312,6 @@ class PlayerJoy(Player):
 						self.isshooting = False
 			else: 
 				pygame.event.post(e)
-		if x_c:
-			self.vx = x_s / x_c
-		if y_c:
-			self.vy = y_s / y_c
 		self.ch_angle = math.atan2(self.yc, self.xc)
 
 class Bot:
