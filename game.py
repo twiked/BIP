@@ -197,6 +197,7 @@ class Player:
 		self.score = 0
 		self.primary = Bullet
 		self.secondary = Bomb
+		self.pe = ParticleEmitter(YellowParticle, 30, 8)
 		
 	def move(self):
 		if 0 < (self.x + self.vx * self.speed * (dt/100.)) < win_width - self.width:
@@ -208,6 +209,7 @@ class Player:
 		if self.isshooting and self.last_shot > 300:
 			self.shots.append(self.primary(self.x + self.width/2, self.y + self.height/2, self.ch_angle))
 			self.last_shot = 0
+			self.pe.create_part(self.x + 16, self.y + 16, self.ch_angle, math.pi)
 		self.last_shot += dt
 		if self.isshooting_s and self.last_shot > 300:
 			self.shots.append(self.secondary(self.x - 5, self.y - 5, self.ch_angle))
@@ -251,7 +253,7 @@ class Player:
 			else:
 				if i.x < 0 or i.x > win_width or i.y < 0 or i.y > win_height:
 					self.shots.remove(i)
-
+		self.pe.update()
 	def hit(self, hitter):
 		self.health -= hitter.damage
 		self.score -= 10*hitter.reward
@@ -324,7 +326,7 @@ class Bot:
 		self.angle = angle
 		self.vx = 0
 		self.vy = 0
-		self.is_hitting = False
+		self.is_hitting = []
 		self.speed = speed
 		self.damage = damage
 		self.target = pick_best_target_in_list(self.x, self.y, players) # pick best player target
@@ -338,10 +340,12 @@ class Bot:
 			self.image = img.convert_alpha()
 		
 	def hit(self, hitter):
-		if self.is_hitting != hitter:
-			self.is_hitting = hitter
+		try:
+			if self.is_hitting.index(hitter):
+				pass
+		except(ValueError):
+			self.is_hitting.append(hitter)
 			self.health = self.health - hitter.damage
-			
 			if self.health <= 0:
 				return self.reward
 		return 0
@@ -398,30 +402,17 @@ class TankBot(Bot):
 	"""TankBot is resistant to damage, and return shot to the player"""
 	def __init__(self, plx, ply):
 		x1, y1, x2, y2 = 0, 0, int(plx), int(ply)
-		if(plx > win_width/2): #bottom screen
+		if(plx > win_width/2):
 			if (ply > win_height/2):
-				#print "Quarter 3 == player in bottom right corner"
 				x1,y1,x2,y2 = 0,0, x2-20,y2-20
 			else:
-				#print "Quarter 2 == player in bottom left corner"
 				x1,y1,x2,y2 = 0, y2+20,x2-20, win_height
-		else: #top screen
+		else:
 			if (ply > win_height/2):
-				#print "Quarter 4 == player in top right corner"
 				x1,y1,x2,y2 = x2+20, 0, win_width,y2-20
 			else:
-				#print "Quarter 1 == player in top left corner"
 				x1,y1,x2,y2 = x2+20, y2+20, win_width, win_height	
 		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2), speed=10.,max_health=500, img=pygame.image.load("itm_circle_grey.png").convert_alpha())
-		
-	def hit(self, hitter):
-		if self.is_hitting != hitter:
-			self.is_hitting = hitter
-			self.health = self.health - (hitter.damage/5) # resist damages
-			print self.health
-			if self.health <= 0:
-				return self.reward
-		return 0
 
 class Shot:
 	"""Generic shot class"""
@@ -438,7 +429,7 @@ class Shot:
 		self.x = x - self.width/2
 		self.y = y - self.height/2
 		self.health = health
-		self.is_hitting = False
+		self.is_hitting = []
 		self.image = pygame.image.load(os.path.join("shotimg", image)).convert_alpha()
 		
 		# vector of shot
@@ -450,9 +441,12 @@ class Shot:
 		self.y += self.vy*(dt/100.)*(self.speed)
 		
 	def hit(self, hitter):
-		if self.is_hitting != hitter:
+		try:
+			if self.is_hitting.index(hitter):
+				pass
+		except(ValueError):
+			self.is_hitting.append(hitter)
 			self.health = self.health - hitter.damage
-			self.is_hitting = hitter
 			if isinstance (hitter, TankBot): # "is a"
 				self.angle += random.uniform(math.pi/2, 3*math.pi/2) # return shots to the player
 				self.vx = math.cos(self.angle)
@@ -499,7 +493,6 @@ class Bomb(Shot):
 		self.health = 9000
 	def update(self):
 		global dt
-		print self.age
 		self.age += dt*self.speed
 		if self.age >= 100:
 			self.health = 0
@@ -513,51 +506,60 @@ class Bomb(Shot):
 		return collided
 	
 class Particle:
-	def __init__(self, x=0, y=0, ttl=1000, angle=0, velocity=1, start_color=(255,255,255), end_color=(255,255,255)):
+	def __init__(self, x, y, ttl=1000, angle=0, velocity=1, start_color=(255,255,255), end_color=(255,255,255)):
 		self.x, self.y  = x, y
 		self.angle = angle
 		self.ttl = ttl
 		self.velocity = velocity
 		self.start_color, self.end_color = start_color, end_color
 		self.color = []
-		for n, i in start_color:
+		for i in start_color:
 			self.color.append(i)
-		self.color_increment = (self.end_color[0]-self.start_color[0], self.end_color[1]-self.start_color[1], self.end_color[2]-self.start_color[2])
-	def update(self):
-		self.x += math.cos(self.angle)*speed
-		self.y += math.sin(self.angle)*speed
-		for n, i in enumerate(color_increment):
+		self.color_increment = ((self.end_color[0]-self.start_color[0])/ttl, (self.end_color[1]-self.start_color[1])/ttl, (self.end_color[2]-self.start_color[2])/ttl)
+	def update(self, dt):
+		self.ttl -= dt
+		self.x += math.cos(self.angle)*self.velocity
+		self.y += math.sin(self.angle)*self.velocity
+		for n, i in enumerate(self.color_increment):
 			self.color[n] += i
+			if self.color[n] < 0:
+				self.color[n]= 0
 	def draw(self):
-		pygame.gfxdraw.pixel(screen, self.x, self.y, self.color)
+		pygame.gfxdraw.pixel(screen, int(self.x), int(self.y), self.color)
 
-class WhiteParticle:
-	def __init__(self, x, y):
-		Particle(self, x=200, y=10, ttl=1000, angle=0, velocity=1, start_color=(255,255,255), end_color=(255,255,255))
+class YellowParticle(Particle):
+	def __init__(self, x, y, angle):
+		Particle.__init__(self, x, y, 200, angle, 1, (255,255,0), (255,0,0))
 
-class ParticleEmitter():
+class ParticleEmitter:
 	def __init__(self, part, interval, count):
 		"""Define a new particle emitter which creates and keep track of particles."""
+		self.part = part
 		self.part_list = []
 		self.interval = interval
 		self.count = count
-	def create_part():
-		for i in range(count):
-			self.part_list.append(part())
+	def create_part(self, x, y, angle, jitter):
+		for i in range(self.count):
+			var = (random.random() - 0.5) * jitter
+			a = angle + var
+			self.part_list.append(self.part(x, y, a))
 	def update(self):
-		for i in self.part_list:
-			i.update()
+		for n,i in enumerate(self.part_list):
+			i.update(dt)
+			if i.ttl <= 0:
+				self.part_list[n] = self.part_list[len(self.part_list)-1]
+				self.part_list.pop()
 	def draw(self):
 		for i in self.part_list:
 			i.draw()
-		
+
 def update():
 	global bot_ctr, dt, last_shot, mouse_x, mouse_y, score
 	score = 0
 	#Spawn bots
 	bot_ctr += 1
 	if (bot_ctr%(max(600-(played_time / 20000), 80/difficulty_modifier/len(players) )) == 0): # more bots through time and with more players
-		bots.append(ImprovedBot(players[0].x, players[0].y)) # oh boy !
+		bots.append(ImprovedBot(players[0].x, players[0].y))
 	if (bot_ctr >= 2000/len(players)):
 		bot_ctr = 0
 		bots.append(TankBot(players[0].x, players[0].y))
@@ -607,17 +609,19 @@ def draw():
 		i.draw()
 	for i in players:	
 		i.draw()
+		i.pe.draw()
 	pygame.display.flip()
-init_players()
 
+	
+init_players()
 # Main loop
 while True:
 	dt = clock.get_time() #Time since last frame
 	played_time += dt * len(players) * difficulty_modifier
-	time_since_last_frame += dt
+	time_since_last_frame += 1
 	update()
-	if time_since_last_frame >= 16:
+	if time_since_last_frame >= 8:
 		time_since_last_frame = 0
 		draw()
 		pygame.display.update() #Send the frame to GPU
-	clock.tick_busy_loop(600) # Advance time and limit to 60 FPS
+	clock.tick(600) # Advance time and limit to 60 FPS
