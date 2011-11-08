@@ -339,8 +339,9 @@ class Bot:
 		
 	def hit(self, hitter):
 		if self.is_hitting != hitter:
-			self.health = self.health - hitter.damage
 			self.is_hitting = hitter
+			self.health = self.health - hitter.damage
+			
 			if self.health <= 0:
 				return self.reward
 		return 0
@@ -352,9 +353,6 @@ class Bot:
 		self.x = self.x + self.vx * self.speed * (dt/100.)
 		self.y = self.y + self.vy * self.speed * (dt/100.)
 		self.check_collision()
-		if self.is_hitting != False:
-			if check_collision(self, self.is_hitting) == False:
-				self.is_hitting = False
 		
 	def draw(self):
 		"""Method for printing the bot to screen """
@@ -395,9 +393,6 @@ class ImprovedBot(Bot):
 			self.x = self.x + self.vx * self.speed
 			self.y = self.y + self.vy * self.speed
 			self.check_collision()
-			if self.is_hitting != False:
-				if check_collision(self, self.is_hitting) == False:
-					self.is_hitting = False
 			
 class TankBot(Bot):
 	"""TankBot is resistant to damage, and return shot to the player"""
@@ -420,15 +415,21 @@ class TankBot(Bot):
 		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2), speed=10.,max_health=500, img=pygame.image.load("itm_circle_grey.png").convert_alpha())
 		
 	def hit(self, hitter):
-		if self.is_hitting == False:
+		if self.is_hitting != hitter:
+			self.is_hitting = hitter
 			self.health = self.health - (hitter.damage/5) # resist damages
+			print self.health
 			if self.health <= 0:
 				return self.reward
 		return 0
 
 class Shot:
 	"""Generic shot class"""
+	#Number of shots spawned (to identify them)
+	num = 0
 	def __init__(self, x, y, angle, damage, w, h, image = "bulletsh.png", speed=400., health = 100):
+		self.num = Shot.num
+		Shot.num += 1
 		self.angle = angle
 		self.speed = speed
 		self.damage = damage
@@ -447,12 +448,9 @@ class Shot:
 	def update(self, dt = 1):
 		self.x += self.vx*(dt/100.)*(self.speed) # use speed of bot in calculation
 		self.y += self.vy*(dt/100.)*(self.speed)
-		if self.is_hitting != False:
-			if check_collision(self, self.is_hitting) == False:
-				self.is_hitting = False
 		
 	def hit(self, hitter):
-		if self.is_hitting == False:
+		if self.is_hitting != hitter:
 			self.health = self.health - hitter.damage
 			self.is_hitting = hitter
 			if isinstance (hitter, TankBot): # "is a"
@@ -515,15 +513,44 @@ class Bomb(Shot):
 		return collided
 	
 class Particle:
-	def __init__(self, x=0, y=0, vx=0, vy=0):
-		self.x = x
-		self.y = y
-		self.vx = vx
-		self.vy = vy
+	def __init__(self, x=0, y=0, ttl=1000, angle=0, velocity=1, start_color=(255,255,255), end_color=(255,255,255)):
+		self.x, self.y  = x, y
+		self.angle = angle
+		self.ttl = ttl
+		self.velocity = velocity
+		self.start_color, self.end_color = start_color, end_color
+		self.color = []
+		for n, i in start_color:
+			self.color.append(i)
+		self.color_increment = (self.end_color[0]-self.start_color[0], self.end_color[1]-self.start_color[1], self.end_color[2]-self.start_color[2])
+	def update(self):
+		self.x += math.cos(self.angle)*speed
+		self.y += math.sin(self.angle)*speed
+		for n, i in enumerate(color_increment):
+			self.color[n] += i
+	def draw(self):
+		pygame.gfxdraw.pixel(screen, self.x, self.y, self.color)
+
+class WhiteParticle:
+	def __init__(self, x, y):
+		Particle(self, x=200, y=10, ttl=1000, angle=0, velocity=1, start_color=(255,255,255), end_color=(255,255,255))
 
 class ParticleEmitter():
-	def __init__(self):
-		pass
+	def __init__(self, part, interval, count):
+		"""Define a new particle emitter which creates and keep track of particles."""
+		self.part_list = []
+		self.interval = interval
+		self.count = count
+	def create_part():
+		for i in range(count):
+			self.part_list.append(part())
+	def update(self):
+		for i in self.part_list:
+			i.update()
+	def draw(self):
+		for i in self.part_list:
+			i.draw()
+		
 def update():
 	global bot_ctr, dt, last_shot, mouse_x, mouse_y, score
 	score = 0
@@ -534,6 +561,7 @@ def update():
 	if (bot_ctr >= 2000/len(players)):
 		bot_ctr = 0
 		bots.append(TankBot(players[0].x, players[0].y))
+		
 		
 	#Update every bot
 	for i in bots[:]:
