@@ -209,7 +209,7 @@ class Player:
 		if self.isshooting and self.last_shot > 300:
 			self.shots.append(self.primary(self.x + self.width/2, self.y + self.height/2, self.ch_angle))
 			self.last_shot = 0
-			self.pe.create_part(self.x + 16, self.y + 16, self.ch_angle, math.pi)
+			self.pe.create_part(self.x + 16, self.y + 16, self.ch_angle, math.pi/4)
 		self.last_shot += dt
 		if self.isshooting_s and self.last_shot > 300:
 			self.shots.append(self.secondary(self.x - 5, self.y - 5, self.ch_angle))
@@ -529,7 +529,7 @@ class Particle:
 
 class YellowParticle(Particle):
 	def __init__(self, x, y, angle):
-		Particle.__init__(self, x, y, 200, angle, 1, (255,255,0), (255,0,0))
+		Particle.__init__(self, x, y, 200, angle, random.random()*3, (255,255,0), (255,0,0))
 
 class ParticleEmitter:
 	def __init__(self, part, interval, count):
