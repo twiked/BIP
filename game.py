@@ -506,11 +506,12 @@ class Bomb(Shot):
 		return collided
 	
 class Particle:
-	def __init__(self, x, y, ttl=1000, angle=0, velocity=1, start_color=(255,255,255), end_color=(255,255,255)):
+	def __init__(self, x, y, ttl=1000, angle=0, velocity=1, angular_velocity=0 start_color=(255,255,255), end_color=(255,255,255)):
 		self.x, self.y  = x, y
 		self.angle = angle
 		self.ttl = ttl
 		self.velocity = velocity
+		self.angular_velocity = angular_velocity
 		self.start_color, self.end_color = start_color, end_color
 		self.color = []
 		for i in start_color:
@@ -520,6 +521,7 @@ class Particle:
 		self.ttl -= dt
 		self.x += math.cos(self.angle)*self.velocity
 		self.y += math.sin(self.angle)*self.velocity
+		self.angle += self.angular_velocity
 		for n, i in enumerate(self.color_increment):
 			self.color[n] += i
 			if self.color[n] < 0:
@@ -529,7 +531,7 @@ class Particle:
 
 class YellowParticle(Particle):
 	def __init__(self, x, y, angle):
-		Particle.__init__(self, x, y, 200, angle, random.random()*3, (255,255,0), (255,0,0))
+		Particle.__init__(self, x, y, 200, angle, random.random()*3, (random.random()-0.5)*2*math.pi/3, (255,255,0), (255,0,0))
 
 class ParticleEmitter:
 	def __init__(self, part, interval, count):
