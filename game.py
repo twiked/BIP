@@ -616,9 +616,12 @@ def draw():
 
 	
 init_players()
+old_time = time.time()
 # Main loop
 while True:
-	dt = clock.get_time() #Time since last frame
+	new_time = time.time()
+	dt = (new_time - old_time)*1000 #Time since last frame
+	old_time = new_time
 	played_time += dt * len(players) * difficulty_modifier
 	time_since_last_frame += 1
 	update()
