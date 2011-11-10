@@ -521,7 +521,7 @@ class Particle:
 		self.ttl -= dt
 		self.x += math.cos(self.angle)*self.velocity
 		self.y += math.sin(self.angle)*self.velocity
-		self.angle += self.angular_velocity
+		self.angle += self.angular_velocity*dt/ttl
 		for n, i in enumerate(self.color_increment):
 			self.color[n] += i
 			if self.color[n] < 0:
@@ -531,7 +531,7 @@ class Particle:
 
 class YellowParticle(Particle):
 	def __init__(self, x, y, angle):
-		Particle.__init__(self, x, y, 200, angle, random.random()*3, (random.random()-0.5)*2*math.pi/3, (255,255,0), (255,0,0))
+		Particle.__init__(self, x, y, 200, angle, random.uniform(0,3), random.uniform(-math.pi/2, math.pi/2), (255,255,0), (255,0,0))
 
 class ParticleEmitter:
 	def __init__(self, part, interval, count):
@@ -542,7 +542,7 @@ class ParticleEmitter:
 		self.count = count
 	def create_part(self, x, y, angle, jitter):
 		for i in range(self.count):
-			var = (random.random() - 0.5) * jitter
+			var = random.random(-jitter, jitter)
 			a = angle + var
 			self.part_list.append(self.part(x, y, a))
 	def update(self):
