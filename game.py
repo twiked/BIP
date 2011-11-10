@@ -1,6 +1,6 @@
 #!/usr/bin/python2
 
-import pygame, math, random, sys, os
+import pygame, math, random, sys, os, time
 from pygame.locals import *
 import pygame.gfxdraw
 
