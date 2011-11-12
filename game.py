@@ -3,7 +3,7 @@
 import pygame, math, random, sys, os, time
 from pygame.locals import *
 import pygame.gfxdraw
-
+pygame.mixer.pre_init(buffer=1024)
 pygame.init()
 
 #Initialize gamepads
@@ -55,7 +55,6 @@ background = pygame.Surface((win_width, win_height))
 particles = pygame.Surface((win_width, win_height)).convert_alpha()
 particles.fill((0,0,0,0))
 background.blit(pygame.transform.smoothscale(back_image, (win_width, win_height)), (0,0), pygame.Rect(0,0,win_width,win_height))
-
 def wait_key():
 	while True:
 		e = pygame.event.wait()
@@ -160,8 +159,8 @@ def check_collision(a, b):
 		return True
 	return False
 
-def pick_best_target_in_list(x, y, l): 
-	""" Choose the closest 'l' object from pos(x, y) """
+def pick_closest_in_list(x, y, l): 
+	""" Choose the closest 'l' 's object from pos(x, y) """
 	mindist = 100000
 	target = 0
 	for i in l:
@@ -196,8 +195,8 @@ class Player:
 		self.last_shot = 0
 		self.score = 0
 		self.primary = Bullet
-		self.secondary = Bomb
-		self.pe = ParticleEmitter(YellowParticle, 30, 8)
+		self.secondary = Rocket
+		self.pe = ParticleEmitter(YellowParticle, 90, 8)
 		
 	def move(self):
 		if 0 < (self.x + self.vx * self.speed * (dt/100.)) < win_width - self.width:
@@ -329,7 +328,7 @@ class Bot:
 		self.is_hitting = []
 		self.speed = speed
 		self.damage = damage
-		self.target = pick_best_target_in_list(self.x, self.y, players) # pick best player target
+		self.target = pick_closest_in_list(self.x, self.y, players) # pick best player target
 		
 		if img == None:
 			self.image = pygame.Surface((20, 20))
@@ -373,24 +372,20 @@ class ImprovedBot(Bot):
 	"""smarter StandardBot, will change target if another player is closer, faster"""
 	def __init__(self, plx, ply):
 		x1, y1, x2, y2 = 0, 0, int(plx), int(ply)
-		if(plx > win_width/2): #bottom screen
+		if(plx > win_width/2):
 			if (ply > win_height/2):
-				#print "Quarter 3 == player in bottom right corner"
 				x1,y1,x2,y2 = 0,0, x2-20,y2-20
 			else:
-				#print "Quarter 2 == player in bottom left corner"
 				x1,y1,x2,y2 = 0, y2+20,x2-20, win_height
-		else: #top screen
+		else:
 			if (ply > win_height/2):
-				#print "Quarter 4 == player in top right corner"
 				x1,y1,x2,y2 = x2+20, 0, win_width,y2-20
 			else:
-				#print "Quarter 1 == player in top left corner"
 				x1,y1,x2,y2 = x2+20, y2+20, win_width, win_height	
 		Bot.__init__(self, random.randint(x1, x2), random.randint(y1, y2), speed=10., img=pygame.image.load("british-flag.gif").convert_alpha())
 		
 		def update(self, dt):
-			self.target = pick_best_target_in_list(self.x, self.y, players)
+			self.target = pick_closest_in_list(self.x, self.y, players)
 			self.angle = -math.atan2((self.target.x-self.x),(self.target.y)-self.y) + math.pi/2
 			self.vx = math.cos(self.angle)
 			self.vy = math.sin(self.angle)
@@ -418,7 +413,7 @@ class Shot:
 	"""Generic shot class"""
 	#Number of shots spawned (to identify them)
 	num = 0
-	def __init__(self, x, y, angle, damage, w, h, image = "bulletsh.png", speed=400., health = 100):
+	def __init__(self, x, y, angle, damage, w, h, image = "bulletsh", sound = "shoot", speed=400., health = 100):
 		self.num = Shot.num
 		Shot.num += 1
 		self.angle = angle
@@ -430,8 +425,10 @@ class Shot:
 		self.y = y - self.height/2
 		self.health = health
 		self.is_hitting = []
-		self.image = pygame.image.load(os.path.join("shotimg", image)).convert_alpha()
-		
+		self.image = pygame.image.load(os.path.join("shotimg", image + ".png")).convert_alpha()
+		self.sound = pygame.mixer.Sound(os.path.join("sounds", sound + ".wav"))
+		if not pygame.mixer.get_busy():
+			self.sound.play()
 		# vector of shot
 		self.vx = math.cos(angle)
 		self.vy = math.sin(angle)
@@ -446,7 +443,6 @@ class Shot:
 				pass
 		except(ValueError):
 			self.is_hitting.append(hitter)
-			
 			if isinstance (hitter, TankBot): # "is a"
 				self.angle += random.uniform(math.pi/2, 3*math.pi/2) # return shots to the player
 				self.vx = math.cos(self.angle)
@@ -466,30 +462,36 @@ class Shot:
 				collided.append(b)
 		return collided
 	def draw(self):
-		#screen.blit(rot_center(self.image, math.degrees(-self.angle)), (self.x, self.y))
 		screen.blit(pygame.transform.smoothscale(rot_center(self.image, -math.degrees(self.angle)),(self.width, self.height)), (self.x, self.y))
 
 class Bullet(Shot):
 	def __init__(self, x, y, angle):
-		Shot.__init__(self, x, y, angle, 100, 16, 16, "bulletsh.png", 400., 50)
+		Shot.__init__(self, x, y, angle, 100, 16, 16, "bulletsh", "shoot", 400., 50)
 
-class RocketShot(Shot): 
+class Rocket(Shot): 
 	"""Small rocket propelled bullet that goes faster with time. Higher damage - lower initial speed -- might as well change 'mode' """
-	
-	def __init__(self, x=0, y=0, angle=0, damage=150, w=5, h=3, mode="rk", speed=50.):
-		Shot.__init__(self, x, y, angle, damage, width, height, mode, speed) # calls __init__ from parent
-		self.health = 1 # low health so it can't go through
-
+	def __init__(self, x=0, y=0, angle=0, damage=150, w=5, h=3, image="rk", speed=5., health=1):
+		Shot.__init__(self, x, y, angle, damage, w, h, image, "rocket", speed) # calls __init__ from parent
+		self.following = pick_closest_in_list(self.x, self.y, bots) #Which bot it follows
+		print self.following.x
+		self.radius = 50
 	def update(self):
+		self.angle = (math.atan2(self.following.y - self.y, self.following.x - self.x))
+		self.vx = math.cos(self.angle)
+		self.vy = math.sin(self.angle)
 		self.x += self.vx*dt*(self.speed/100) # use speed of bot in calculation
 		self.y += self.vy*dt*(self.speed/100)
 		self.speed = min(self.speed+2, 2500) # increase shot speed / get a maximum speed for the rocket
 	# should the rocket folow a bot (check for everyshot which one to target) folow the mouse (can lead to weird behaviors) or just go straight
 	# might as well add the explosion (hit multiple bots in an area)
-	
+	def hit(self, hitter):
+		self.health = 0
+		for i in bots:
+			if math.hypot(i.x-self.x, i.y-self.y) < self.radius:
+				i.health = 0
 class Bomb(Shot):
 	def __init__(self, x=0, y=0, angle=0):
-		Shot.__init__(self, x=x+16, y=y+16, angle=angle, damage=200, w=5, h=3, speed=1)
+		Shot.__init__(self, x=x+16, y=y+16, angle=angle, damage=200, w=5, h=3, speed=1, sound="explosion")
 		self.age = 1
 		self.maxradius = 100
 		self.health = 9000
@@ -529,7 +531,7 @@ class Particle:
 			if self.color[n] < 0:
 				self.color[n]= 0
 	def draw(self):
-		pygame.gfxdraw.pixel(screen, int(self.x), int(self.y), self.color)
+		pygame.gfxdraw.aacircle(screen, int(self.x), int(self.y), 1, self.color)
 
 class YellowParticle(Particle):
 	def __init__(self, x, y, angle):
@@ -604,11 +606,13 @@ def update():
 		score += i.score
 
 def draw():
-	text = font.render("Score :" + str(score),True,(255,255,255))
+	score_txt = font.render("Score :" + str(score),True,(255,255,255))
+	time_txt = font.render("Time :" + str(int(played_time)),True,(255,255,255))
 	screen.blit(background, (0, 0)) #Blit background to real screen
 	screen.blit(particles, (0,0))
 	particles.fill((0,0,0,0))
-	screen.blit(text, (0,0)) #Blit Text to real screen
+	screen.blit(score_txt, (0,0)) #Blit Text to real screen
+	screen.blit(time_txt, (0, win_height-20))
 	for i in bots: #Draw every bot to screen
 		i.draw()
 	for i in players:	
