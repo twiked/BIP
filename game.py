@@ -162,7 +162,7 @@ def check_collision(a, b):
 def pick_closest_in_list(x, y, l): 
 	""" Choose the closest 'l' 's object from pos(x, y) """
 	mindist = 100000
-	target = 0
+	target = None
 	for i in l:
 		angle = -math.atan2((i.x-x),(i.y)-y) + math.pi/2
 		vx = math.cos(angle)
@@ -172,6 +172,7 @@ def pick_closest_in_list(x, y, l):
 			mindist = curdist
 			target = i
 	return target
+	
 
 class Player:
 	def __init__(self, x=win_width/2, y=win_height/2):
@@ -238,13 +239,6 @@ class Player:
 		global dt
 		self.update_crosshair()
 		self.shoot()
-		#Move and check collision, add score according to dmg and reward
-		for s in self.shots:
-			s.update()
-			for i in s.check_collisions():
-				self.score += i.hit(s)
-				s.hit(i)
-			
 		#Check for out of zone or destroyed shots, and delete them
 		for i in self.shots[:]:
 			if i.health <= 0:
@@ -252,6 +246,14 @@ class Player:
 			else:
 				if i.x < 0 or i.x > win_width or i.y < 0 or i.y > win_height:
 					self.shots.remove(i)
+		#Move and check collision, add score according to dmg and reward
+		for s in self.shots:
+			s.update()
+			for i in s.check_collisions():
+				self.score += i.hit(s)
+				s.hit(i)
+			
+
 		self.pe.update()
 	def hit(self, hitter):
 		self.health -= hitter.damage
@@ -471,10 +473,12 @@ class Bullet(Shot):
 class Rocket(Shot): 
 	"""Small rocket propelled bullet that goes faster with time. Higher damage - lower initial speed -- might as well change 'mode' """
 	def __init__(self, x=0, y=0, angle=0, damage=150, w=5, h=3, image="rk", speed=5., health=1):
-		Shot.__init__(self, x, y, angle, damage, w, h, image, "rocket", speed) # calls __init__ from parent
-		self.following = pick_closest_in_list(self.x, self.y, bots) #Which bot it follows
-		print self.following.x
-		self.radius = 50
+		self.following = pick_closest_in_list(x, y, bots) #Which bot it follows
+		if self.following != None:
+			Shot.__init__(self, x, y, angle, damage, w, h, image, "rocket", speed) # calls __init__ from parent
+			self.radius = 50
+		else:
+			self.health=0
 	def update(self):
 		self.angle = (math.atan2(self.following.y - self.y, self.following.x - self.x))
 		self.vx = math.cos(self.angle)
@@ -573,9 +577,10 @@ def update():
 		
 	#Update every bot
 	for i in bots[:]:
-		i.update(dt)
 		if i.health <= 0:
 			bots.remove(i)
+		i.update(dt)
+
 			
 	#Event handling
 	for event in pygame.event.get((pygame.MOUSEMOTION, pygame.MOUSEBUTTONUP, pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN, pygame.QUIT)):
