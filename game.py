@@ -38,7 +38,7 @@ mouse_x = 0
 mouse_y = 0
 time_since_last_frame = 0
 played_time = 0
-difficulty_modifier = 1
+difficulty_modifier = 0.3
 dt = clock.get_time()
 win_width = 1024
 win_height = 600
@@ -446,11 +446,13 @@ class Shot:
 				pass
 		except(ValueError):
 			self.is_hitting.append(hitter)
-			self.health = self.health - hitter.damage
+			
 			if isinstance (hitter, TankBot): # "is a"
 				self.angle += random.uniform(math.pi/2, 3*math.pi/2) # return shots to the player
 				self.vx = math.cos(self.angle)
 				self.vy = math.sin(self.angle)
+			else:
+				self.health = self.health - hitter.damage
 	
 	def set_angle(angle):
 		self.angle = angle
@@ -469,7 +471,7 @@ class Shot:
 
 class Bullet(Shot):
 	def __init__(self, x, y, angle):
-		Shot.__init__(self, x, y, angle, 100, 16, 16, "bulletsh.png", 400., 200)
+		Shot.__init__(self, x, y, angle, 100, 16, 16, "bulletsh.png", 400., 50)
 
 class RocketShot(Shot): 
 	"""Small rocket propelled bullet that goes faster with time. Higher damage - lower initial speed -- might as well change 'mode' """
@@ -487,7 +489,7 @@ class RocketShot(Shot):
 	
 class Bomb(Shot):
 	def __init__(self, x=0, y=0, angle=0):
-		Shot.__init__(self, x=x+16, y=y+16, angle=angle, damage=30, w=5, h=3, speed=1)
+		Shot.__init__(self, x=x+16, y=y+16, angle=angle, damage=200, w=5, h=3, speed=1)
 		self.age = 1
 		self.maxradius = 100
 		self.health = 9000
@@ -497,7 +499,7 @@ class Bomb(Shot):
 		if self.age >= 100:
 			self.health = 0
 	def draw(self):
-		pygame.gfxdraw.aacircle(screen, int(self.x), int(self.y), self.age, (255,0,0))
+		pygame.gfxdraw.aacircle(screen, int(self.x), int(self.y), int(self.age), (255,0,0))
 	def check_collisions(self):
 		collided = []
 		for b in bots:
@@ -506,7 +508,7 @@ class Bomb(Shot):
 		return collided
 	
 class Particle:
-	def __init__(self, x, y, ttl=1000, angle=0, velocity=1, angular_velocity=0 start_color=(255,255,255), end_color=(255,255,255)):
+	def __init__(self, x, y, ttl=1000, angle=0, velocity=1, angular_velocity=0, start_color=(255,255,255), end_color=(255,255,255)):
 		self.x, self.y  = x, y
 		self.angle = angle
 		self.ttl = ttl
@@ -521,7 +523,7 @@ class Particle:
 		self.ttl -= dt
 		self.x += math.cos(self.angle)*self.velocity
 		self.y += math.sin(self.angle)*self.velocity
-		self.angle += self.angular_velocity*dt/ttl
+		self.angle += self.angular_velocity*dt/self.ttl
 		for n, i in enumerate(self.color_increment):
 			self.color[n] += i
 			if self.color[n] < 0:
@@ -531,7 +533,7 @@ class Particle:
 
 class YellowParticle(Particle):
 	def __init__(self, x, y, angle):
-		Particle.__init__(self, x, y, 200, angle, random.uniform(0,3), random.uniform(-math.pi/2, math.pi/2), (255,255,0), (255,0,0))
+		Particle.__init__(self, x, y, 100, angle, random.uniform(0,2), random.uniform(-math.pi/2, math.pi/2), (255,255,0), (255,0,0))
 
 class ParticleEmitter:
 	def __init__(self, part, interval, count):
@@ -542,7 +544,7 @@ class ParticleEmitter:
 		self.count = count
 	def create_part(self, x, y, angle, jitter):
 		for i in range(self.count):
-			var = random.random(-jitter, jitter)
+			var = random.uniform(-jitter, jitter)
 			a = angle + var
 			self.part_list.append(self.part(x, y, a))
 	def update(self):
@@ -560,7 +562,7 @@ def update():
 	score = 0
 	#Spawn bots
 	bot_ctr += 1
-	if (bot_ctr%(max(600-(played_time / 20000), 80/difficulty_modifier/len(players) )) == 0): # more bots through time and with more players
+	if (bot_ctr%(max(600-(played_time / 20000), 80/difficulty_modifier/len(players) )) <= 1): # more bots through time and with more players
 		bots.append(ImprovedBot(players[0].x, players[0].y))
 	if (bot_ctr >= 2000/len(players)):
 		bot_ctr = 0
@@ -623,9 +625,9 @@ while True:
 	dt = (new_time - old_time)*1000 #Time since last frame
 	old_time = new_time
 	played_time += dt * len(players) * difficulty_modifier
-	time_since_last_frame += 1
+	time_since_last_frame += dt
 	update()
-	if time_since_last_frame >= 8:
+	if time_since_last_frame >= 16:
 		time_since_last_frame = 0
 		draw()
 		pygame.display.update() #Send the frame to GPU
