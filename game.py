@@ -562,7 +562,7 @@ class Particle:
 			if self.color[n] < 0:
 				self.color[n]= 0
 	def draw(self):
-		pygame.gfxdraw.aacircle(screen, int(self.x), int(self.y), 1, self.color)
+		pygame.gfxdraw.pixel(screen, int(self.x), int(self.y), self.color)
 
 class YellowParticle(Particle):
 	def __init__(self, x, y, angle):
@@ -608,7 +608,8 @@ def update():
 		i.update(dt)
 
 	#Event handling
-	for event in pygame.event.get((pygame.MOUSEMOTION, pygame.MOUSEBUTTONUP, pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN, pygame.QUIT)):
+	#for event in pygame.event.get((pygame.MOUSEMOTION, pygame.MOUSEBUTTONUP, pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN, pygame.QUIT)):
+	for event in pygame.event.get():
 		if event.type == pygame.MOUSEMOTION:
 			mouse_x, mouse_y = event.pos
 		elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -641,7 +642,9 @@ def draw():
 	screen.blit(background, (0, 0)) #Blit background to real screen
 	time_txt = font.render("Time :" + str(int(played_time/1000)),True,(255,255,255))
 	score_txt = font.render("Score :" + str(score),True,(255,255,255))
+	lives_txt = font.render("Lives : " + str(lives), True, (255,0,0))
 	screen.blit(time_txt, (0, win_height-20))
+	screen.blit(lives_txt, (win_width - 70, 0))
 	screen.blit(score_txt, (0,0))
 	for i in bots: #Draw every bot to screen
 		i.draw()
