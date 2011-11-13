@@ -122,13 +122,13 @@ def init_players():
 					if k.key == pygame.K_1 or k.key == pygame.K_KP1:
 						players.append(PlayerJoy(joys[0]))
 						break
-					if (k.key == pygame.K_2 or k.key == pygame.K_KP2) and player_count >= 2 and len(joys)>=2:
+					if (k.key == pygame.K_2 or k.key == pygame.K_KP2) and len(joys)>=2:
 						players.append(PlayerJoy(joys[1]))
 						break
-					if (k.key == pygame.K_3 or k.key == pygame.K_KP3) and player_count >= 3 and len(joys)>=3:
+					if (k.key == pygame.K_3 or k.key == pygame.K_KP3) and len(joys)>=3:
 						players.append(PlayerJoy(joys[2]))
 						break
-					if (k.key == pygame.K_4 or k.key == pygame.K_KP4) and player_count == 4 and len(joys)>=4:
+					if (k.key == pygame.K_4 or k.key == pygame.K_KP4) and len(joys)>=4:
 						players.append(PlayerJoy(joys[3]))
 						break
 				break
@@ -673,9 +673,9 @@ if score > hiscore:
 	scorefile = open("score", "w")
 	scorefile.write(str(score))
 	scorefile.close()
-	strt = "You beat the HiScore !"
+	strt = "You beat the HiScore of {0} !".format(hiscore)
 else:
-	strt = "You DID NOT beat the HiScore, too bad !"
+	strt = "You DID NOT beat the HiScore of {0}, too bad !".format(hiscore)
 txt = font.render(strt, True, (255,0,0))
 width, height = font.size(strt)
 
