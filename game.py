@@ -12,12 +12,16 @@ joys = []
 for i in range(pygame.joystick.get_count()):
 	joys.append(pygame.joystick.Joystick(i))
 	joys[i].init()
+
+#Initialise Clock
 clock = pygame.time.Clock()
+
 # Font object to write text with it
 font = pygame.font.Font(None, 25)
 players = []
 bots = []
 
+#Mouse cursor initalisation
 curs = (
 	"        ",
 	"        ",
@@ -27,34 +31,46 @@ curs = (
 	"        ",
 	"        ",
 	"        ")
-
 datatuple, masktuple = pygame.cursors.compile(curs, black='X', white=' ', xor='o')
 pygame.mouse.set_cursor((8,8), (4,4), datatuple, masktuple)
+
 player_count = 0
 bot_ctr = 0
 score = 0
 last_shot = 0
 mouse_x = 0
 mouse_y = 0
+game = True
+lives = 5
 time_since_last_frame = 0
 played_time = 0
-difficulty_modifier = 0.3
+difficulty_modifier = 1
 dt = clock.get_time()
 win_width = 1024
 win_height = 600
+should_update_infos = True
+
+#Score file reading
+scorefile = open('score', 'r+')
+hiscore = int(scorefile.read())
+
 #Fullscreen
 #screen = pygame.display.set_mode((win_width, win_height), pygame.FULLSCREEN)
 #Windowed
 screen = pygame.display.set_mode((win_width, win_height))
+infos = pygame.surface.Surface((win_width, win_height)).convert_alpha()
 pygame.display.set_caption('Biggest Idiotic Program')
+
 #Black background
 #background = pygame.Surface(screen.get_size()).convert()
 #background.fill((0, 0, 0))
+
+#Textured background
 back_image = pygame.image.load("back.jpg")
-background = pygame.Surface((win_width, win_height))
-particles = pygame.Surface((win_width, win_height)).convert_alpha()
-particles.fill((0,0,0,0))
+background = pygame.Surface((win_width, win_height)).convert()
+semi_background = pygame.Surface((win_width, win_height)).convert()
 background.blit(pygame.transform.smoothscale(back_image, (win_width, win_height)), (0,0), pygame.Rect(0,0,win_width,win_height))
+
 def wait_key():
 	while True:
 		e = pygame.event.wait()
@@ -191,6 +207,7 @@ class Player:
 		self.health = 100
 		self.damage = 9000
 		self.shots = []
+		self.is_hitting = []
 		self.isshooting = False
 		self.isshooting_s = False
 		self.last_shot = 0
@@ -256,8 +273,18 @@ class Player:
 
 		self.pe.update()
 	def hit(self, hitter):
-		self.health -= hitter.damage
-		self.score -= 10*hitter.reward
+		global should_update_infos
+		should_update_infos = True
+		global lives, game
+		try:
+			if self.is_hitting.index(hitter):
+				pass
+		except(ValueError):
+			self.is_hitting.append(hitter)
+			lives -= 1
+			if lives <= 0:
+				game = False
+
 	def draw(self):
 		screen.blit(pygame.transform.smoothscale(rot_center(self.image, -math.degrees(self.ch_angle)),(self.width,self.height)), (self.x, self.y))
 		pygame.draw.aaline(screen, (255,255,255), (self.ch_x1, self.ch_y1), (self.ch_x2, self.ch_y2))
@@ -440,6 +467,8 @@ class Shot:
 		self.y += self.vy*(dt/100.)*(self.speed)
 		
 	def hit(self, hitter):
+		global should_update_infos
+		should_update_infos = True
 		try:
 			if self.is_hitting.index(hitter):
 				pass
@@ -486,8 +515,6 @@ class Rocket(Shot):
 		self.x += self.vx*dt*(self.speed/100) # use speed of bot in calculation
 		self.y += self.vy*dt*(self.speed/100)
 		self.speed = min(self.speed+2, 2500) # increase shot speed / get a maximum speed for the rocket
-	# should the rocket folow a bot (check for everyshot which one to target) folow the mouse (can lead to weird behaviors) or just go straight
-	# might as well add the explosion (hit multiple bots in an area)
 	def hit(self, hitter):
 		self.health = 0
 		for i in bots:
@@ -566,7 +593,7 @@ class ParticleEmitter:
 def update():
 	global bot_ctr, dt, last_shot, mouse_x, mouse_y, score
 	score = 0
-	#Spawn bots
+	#Bot spawning
 	bot_ctr += 1
 	if (bot_ctr%(max(600-(played_time / 20000), 80/difficulty_modifier/len(players) )) <= 1): # more bots through time and with more players
 		bots.append(ImprovedBot(players[0].x, players[0].y))
@@ -574,14 +601,12 @@ def update():
 		bot_ctr = 0
 		bots.append(TankBot(players[0].x, players[0].y))
 		
-		
 	#Update every bot
 	for i in bots[:]:
 		if i.health <= 0:
 			bots.remove(i)
 		i.update(dt)
 
-			
 	#Event handling
 	for event in pygame.event.get((pygame.MOUSEMOTION, pygame.MOUSEBUTTONUP, pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN, pygame.QUIT)):
 		if event.type == pygame.MOUSEMOTION:
@@ -603,7 +628,8 @@ def update():
 		elif event.type == QUIT:
 			pygame.quit()
 			sys.exit()
-	#Must be after event handling to listen to mouse input (shooting)
+
+	#Players' updates
 	for i in players:
 		i.input_()
 		i.move()
@@ -611,13 +637,12 @@ def update():
 		score += i.score
 
 def draw():
-	score_txt = font.render("Score :" + str(score),True,(255,255,255))
-	time_txt = font.render("Time :" + str(int(played_time)),True,(255,255,255))
+	global should_update_infos
 	screen.blit(background, (0, 0)) #Blit background to real screen
-	screen.blit(particles, (0,0))
-	particles.fill((0,0,0,0))
-	screen.blit(score_txt, (0,0)) #Blit Text to real screen
+	time_txt = font.render("Time :" + str(int(played_time/1000)),True,(255,255,255))
+	score_txt = font.render("Score :" + str(score),True,(255,255,255))
 	screen.blit(time_txt, (0, win_height-20))
+	screen.blit(score_txt, (0,0))
 	for i in bots: #Draw every bot to screen
 		i.draw()
 	for i in players:	
@@ -625,11 +650,12 @@ def draw():
 		i.pe.draw()
 	pygame.display.flip()
 
-	
+#Game preparation
 init_players()
 old_time = time.time()
+
 # Main loop
-while True:
+while game:
 	new_time = time.time()
 	dt = (new_time - old_time)*1000 #Time since last frame
 	old_time = new_time
@@ -641,3 +667,26 @@ while True:
 		draw()
 		pygame.display.update() #Send the frame to GPU
 	clock.tick(600) # Advance time and limit to 60 FPS
+
+scorefile.close()
+if score > hiscore:
+	scorefile = open("score", "w")
+	scorefile.write(str(score))
+	scorefile.close()
+	strt = "You beat the HiScore !"
+else:
+	strt = "You DID NOT beat the HiScore, too bad !"
+txt = font.render(strt, True, (255,0,0))
+width, height = font.size(strt)
+
+screen.blit(background, (0, 0)) #Blit background to real screen
+
+scorestring = "Your score : " + str(score)
+finalscore_txt = font.render(scorestring, True, (255,255,255))
+width_2, height_2 = font.size(scorestring)
+
+screen.blit(txt, (win_width/2- width/2, win_height/2- height/2))
+screen.blit(finalscore_txt, (win_width/2- width_2/2, win_height/2+ height_2/2))
+pygame.display.flip()
+while wait_key():
+	pass
